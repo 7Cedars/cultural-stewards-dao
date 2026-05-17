@@ -18,8 +18,6 @@ contract ConvergenceLayer is DeploySetup {
     PowersTypes.MandateInitData[] constitution; 
     PowersFactory powersFactory;
 
-    uint16 public assignRepsMandateId;
-
     //////////////////////////////////////////////////////////////////////
     //                        INITIALISATION                            //
     //////////////////////////////////////////////////////////////////////
@@ -29,7 +27,7 @@ contract ConvergenceLayer is DeploySetup {
         vm.startBroadcast();
         PowersDeployer ConvergenceLayerDeployer = new PowersDeployer();  // £todo: I think this can be deployed as a singleton contract
         powersFactory = new PowersFactory( 
-            string.concat(baseURI, "physicalLayer.json"), // uri
+            string.concat(baseURI, "convergenceLayer.json"), // uri
             helperConfig.getMaxCallDataLength(block.chainid), // max call data length
             helperConfig.getMaxReturnDataLength(block.chainid), // max return data length
             helperConfig.getMaxExecutionsLength(block.chainid), // max executions length 
@@ -45,12 +43,13 @@ contract ConvergenceLayer is DeploySetup {
     function constitutePowers(
         address primaryLayer,
         address governed721,
+        address zkPassport_PowersRegistry,
         address activityToken,
         address nominees,
         uint16 mintPoapTokenId,
         uint16 requestAllowanceConvergenceLayerId
     ) public {
-        _createConstitution(primaryLayer, governed721, activityToken, nominees, mintPoapTokenId, requestAllowanceConvergenceLayerId);
+        _createConstitution(primaryLayer, governed721, zkPassport_PowersRegistry, activityToken, nominees, mintPoapTokenId, requestAllowanceConvergenceLayerId);
         
         PowersTypes.MandateInitData[] memory constitutionPacked = packageInitData(constitution, PACKAGE_SIZE);
         vm.startBroadcast();
@@ -73,6 +72,7 @@ contract ConvergenceLayer is DeploySetup {
     function _createConstitution(
         address primaryLayer,
         address governed721,
+        address zkPassport_PowersRegistry,
         address activityToken,
         address nominees,
         uint16 mintPoapTokenId, 
@@ -85,7 +85,7 @@ contract ConvergenceLayer is DeploySetup {
 
         // setup role labels // 
         calldatas = new bytes[](11);
-        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Setup Initiator", "");  
+        calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Ideas Layer", "");
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Attendee", ""); 
         calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Steward", ""); 
@@ -232,6 +232,40 @@ contract ConvergenceLayer is DeploySetup {
         );
         delete conditions;
 
+        // ASSIGN LEGAL INTERFACER (from Ideas Layer) //
+        // Called by the parent Ideas Layer (role 0) via ExternalAction_OnReturnValue after ZKP verification.
+        // Receives abi.encode(uint256(3), candidateAddress) as mandateCalldata and assigns role 3 on this CL.
+        // NB: role 0 must be assigned to the parent Ideas Layer instance at CL instantiation time.
+        mandateIds = new uint16[](1);
+        mandateIds[0] = mandateCount + 1;
+
+        flows.push(PowersTypes.Flow({
+            nameDescription: "Assign Legal Interfacer: The parent Ideas Layer assigns the Legal Interfacer role (role 3) after ZKP verification on the Ideas Layer. Called automatically via ExternalAction_OnReturnValue.",
+            mandateIds: mandateIds
+        }));
+
+        inputParams = new string[](2);
+        inputParams[0] = "uint256 RoleId";
+        inputParams[1] = "address Candidate";
+
+        mandateCount++;
+        conditions.allowedRole = 0; // = Ideas Layer (role 0 must be assigned to the parent IL instance at CL setup)
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Assign Legal Interfacer: The parent Ideas Layer can assign the Legal Interfacer role (role 3) to a ZKP-verified candidate. Called via ExternalAction_OnReturnValue after the Ideas Layer ZKP checks pass and the Primary Layer veto window expires.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Advanced"),
+                config: abi.encode(
+                    address(0), // target: own Powers contract
+                    IPowers.assignRole.selector,
+                    abi.encode(), // no paramsBefore — roleId and candidate address come from mandateCalldata
+                    inputParams, // ["uint256 RoleId", "address Candidate"] — decoded from incoming calldata
+                    abi.encode() // no paramsAfter
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
         // MINT POAPS FOR ATTENDEES //
         mandateIds = new uint16[](1);
         mandateIds[0] = mandateCount + 1;
@@ -273,7 +307,7 @@ contract ConvergenceLayer is DeploySetup {
         mandateIds[0] = mandateCount + 1;
 
         flows.push(PowersTypes.Flow({
-            nameDescription: "Claim Attendee Role: This flow allows anyone to become a member if they have sufficient activity tokens.",
+            nameDescription: "Claim Attendee Role: This flow allows anyone to become a member if they have sufficient POAPs.",
             mandateIds: mandateIds
         }));
 
@@ -283,7 +317,7 @@ contract ConvergenceLayer is DeploySetup {
         conditions.allowedRole = type(uint256).max; // = public
         constitution.push(
             PowersTypes.MandateInitData({
-                nameDescription: "Request Membership: Anyone can become a member if they have sufficient activity token from the Layer 1 tokens during the last 15 days.",
+                nameDescription: "Request Membership: Anyone can become a member if they have sufficient POAPs minted through the primary Layer during the last 15 days.",
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "GovernedToken_GatedAccess"),
                 config: abi.encode(
                     activityToken, // soulbound token contract
@@ -321,7 +355,7 @@ contract ConvergenceLayer is DeploySetup {
                 targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ZKPassport_Check"),
                 config: abi.encode(
                     inputParams,
-                    helperConfig.getZkPassportRootRegistry(block.chainid), // the address of the ZK-Passport root registry contract, which is needed to verify the ZKPs. This is set in the helper config for each chain.
+                    zkPassport_PowersRegistry, 
                     60 * 60 * 24 * 90, // the time window in which the ZKP proof needs to have been created. This is three months.
                     false, // facematch not required (for now) 
                     bytes4(keccak256("isAgeAboveOrEqual(uint8)")),  
@@ -388,37 +422,6 @@ contract ConvergenceLayer is DeploySetup {
             }));
         delete conditions;
 
-        // ASSIGN LEGAL REPS //
-        mandateIds = new uint16[](1);
-        mandateIds[0] = mandateCount + 1;
-
-        flows.push(PowersTypes.Flow({
-            nameDescription: "Assign Legal Interfacers: This flow allows the Primary Layer to assign legal Interfacers.",
-            mandateIds: mandateIds
-        }));
-
-        // Primary Layer: assign Legal Interfacer. 
-        mandateCount++;
-        inputParams = new string[](2);
-        inputParams[0] = "address Interfacer"; 
-        conditions.allowedRole = 6; // = Primary Layer.
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Assign Legal Interfacers: Primary Layer can assign legal Interfacers, who have the power to adopt and revoke executive mandates.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Advanced"),
-                config: abi.encode(
-                    address(0), // target is its own powers contract
-                    IPowers.assignRole.selector,
-                    abi.encode(3), // roleId of Legal Interfacer role
-                    inputParams,
-                    abi.encode() // no params after
-                ),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-        assignRepsMandateId = mandateCount; 
-        
         //////////////////////////////////////////////////////////////////////
         //                        REFORM MANDATES                           //
         //////////////////////////////////////////////////////////////////////

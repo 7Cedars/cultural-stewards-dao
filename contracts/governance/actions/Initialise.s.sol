@@ -18,6 +18,8 @@ contract Initialise is ActionHelpers {
     uint256 forVote;
     uint256 abstainVote;
 
+    address deployedConvergenceLayer;
+
     function runSetupMandate(address powers, uint256 nonce, uint256[] memory privateKeys) public {
         // step 0: reset state variables.
         delete mandateSlots;
@@ -102,13 +104,13 @@ contract Initialise is ActionHelpers {
         for (uint i = 0; i < names.length; i++) {
             // "Initiate Ideas Layer" requires role 1 (Participants).
             vm.startBroadcast(getPrivateKeyRoleHolder(primaryLayer, 1, 0, privateKeys));
-            IPowers(payable(primaryLayer)).request(mandateSlots[0], abi.encode(names[i]), nonce + i, string.concat("Executing create ideas layer"));
+            IPowers(payable(primaryLayer)).request(mandateSlots[0], abi.encode(names[i]), nonce + i, string.concat("Executing initialising ideas layer"));
             vm.stopBroadcast();
 
             // step 3b: execute mandate: create ideas layer.
             // "Create Ideas Layer" requires role 2 (Stewards).
             vm.startBroadcast(getPrivateKeyRoleHolder(primaryLayer, 2, 0, privateKeys));
-            actionIds.push(IPowers(primaryLayer).propose(mandateSlots[1], abi.encode(names[i]), nonce + i, string.concat("Creating ideas layer")));
+            actionIds.push(IPowers(primaryLayer).propose(mandateSlots[1], abi.encode(names[i]), nonce + i, string.concat("Proposing the creation of an ideas layer")));
             vm.stopBroadcast();
 
             // voting on proposal.
@@ -137,7 +139,7 @@ contract Initialise is ActionHelpers {
         // executing proposal. All mandates require role 2 (Stewards).
         for (uint i = 0; i < names.length; i++) {
             vm.startBroadcast(getPrivateKeyRoleHolder(primaryLayer, 2, 0, privateKeys));
-            IPowers(payable(primaryLayer)).request(mandateSlots[0], abi.encode(names[i]), nonce + i, string.concat("Executing create ideas layer"));
+            IPowers(primaryLayer).request(mandateSlots[0], abi.encode(names[i]), nonce + i, string.concat("Executing create ideas layer"));
             vm.stopBroadcast();
 
             // step 3c: execute mandate: assign role ID to layer, and register at paymaster.
@@ -229,42 +231,60 @@ contract Initialise is ActionHelpers {
         delete mandateSlots;
         delete actionIds;
 
-        // step 1: identify mandates to run at the Primary Layer.
+        // step 1: identify mandates to run 
         mandateSlots.push(findMandateIdInOrg("Send request: Stewards can send the request to create a new Convergence Layer to the Primary Layer", Powers(payable(ideasLayer))));
 
         // step 5: execute "Send request" → triggers creation of Convergence Layer at Primary Layer.
         vm.startBroadcast(getPrivateKeyRoleHolder(ideasLayer, 2, 0, privateKeys));
         IPowers(ideasLayer).request(mandateSlots[0], abi.encode("London Venue", msg.sender), nonce, string.concat("Executing send request for new convergence layer"));
         vm.stopBroadcast();
-
     }
     
-    function deployConvergenceLayer4(address primaryLayer, address ideasLayer, uint256 nonce, uint256[] memory privateKeys) public {
+    function deployConvergenceLayer4(address primaryLayer, uint256 nonce, uint256[] memory privateKeys) public {
         // step 0: reset state variables.
         delete mandateSlots;
         delete actionIds;
         
-        // step 1: identify mandates to run at the Primary Layer.
-        mandateSlots.push(findMandateIdInOrg("Create Convergence Layer: Ideas Layers can create a Convergence Layer", Powers(payable(primaryLayer))));
+        // step 1: identify mandates to run  
         mandateSlots.push(findMandateIdInOrg("Assign role Id: Assign role Id 3 to Convergence Layer", Powers(payable(primaryLayer))));
         mandateSlots.push(findMandateIdInOrg("Assign Delegate status: Assign delegate status at Safe treasury to the Convergence Layer", Powers(payable(primaryLayer))));
         mandateSlots.push(findMandateIdInOrg("Register Convergence Layer to Paymaster: Register the new Convergence Layer to the paymaster as a sponsored target, this means gas cost for interacting with the new Convergence Layer can be sponsored by the paymaster", Powers(payable(primaryLayer))));
 
-        // step 2: at Primary Layer: assign role ID to convergence layer, assign it a delegate status at Safe & register at paymaster.
+        // step 2: at Primary Layer: PROPOSE TO assign role ID to convergence layer, assign it a delegate status at Safe & register at paymaster. -- there is a timelock on these mandates that needs to pass. 
+        // All mandates require role 2 (Stewards) at the Primary Layer.
+        vm.startBroadcast(getPrivateKeyRoleHolder(primaryLayer, 2, 0, privateKeys)); 
+        IPowers(primaryLayer).propose(mandateSlots[0], abi.encode("London Venue", msg.sender), nonce, string.concat("Assigning role ID for convergence layer"));
+        IPowers(primaryLayer).propose(mandateSlots[1], abi.encode("London Venue", msg.sender), nonce, string.concat("Assigning delegate status for convergence layer"));
+        IPowers(primaryLayer).propose(mandateSlots[2], abi.encode("London Venue", msg.sender), nonce, string.concat("Registering convergence layer to paymaster"));
+        vm.stopBroadcast();
+    }
+
+    function deployConvergenceLayer5(address primaryLayer, uint256 nonce, uint256[] memory privateKeys) public {
+        // step 0: reset state variables.
+        delete mandateSlots;
+        delete actionIds;
+        
+        // step 1: identify mandates to run  
+        mandateSlots.push(findMandateIdInOrg("Assign role Id: Assign role Id 3 to Convergence Layer", Powers(payable(primaryLayer))));
+        mandateSlots.push(findMandateIdInOrg("Assign Delegate status: Assign delegate status at Safe treasury to the Convergence Layer", Powers(payable(primaryLayer))));
+        mandateSlots.push(findMandateIdInOrg("Register Convergence Layer to Paymaster: Register the new Convergence Layer to the paymaster as a sponsored target, this means gas cost for interacting with the new Convergence Layer can be sponsored by the paymaster", Powers(payable(primaryLayer))));
+
+        // step 2: at Primary Layer: PROPOSE TO assign role ID to convergence layer, assign it a delegate status at Safe & register at paymaster. -- there is a timelock on these mandates that needs to pass. 
         // All mandates require role 2 (Stewards) at the Primary Layer.
         vm.startBroadcast(getPrivateKeyRoleHolder(primaryLayer, 2, 0, privateKeys));
         IPowers(primaryLayer).request(mandateSlots[0], abi.encode("London Venue", msg.sender), nonce, string.concat("Assigning role ID for convergence layer"));
-        IPowers(primaryLayer).request(mandateSlots[1], abi.encode("London Venue", msg.sender), nonce, string.concat("Assigning role ID for convergence layer"));
-        IPowers(primaryLayer).request(mandateSlots[2], abi.encode("London Venue", msg.sender), nonce, string.concat("Assigning delegate status for convergence layer"));
-        IPowers(primaryLayer).request(mandateSlots[3], abi.encode("London Venue", msg.sender), nonce, string.concat("Registering convergence layer to paymaster"));
+        IPowers(primaryLayer).request(mandateSlots[1], abi.encode("London Venue", msg.sender), nonce, string.concat("Assigning delegate status for convergence layer"));
+        IPowers(primaryLayer).request(mandateSlots[2], abi.encode("London Venue", msg.sender), nonce, string.concat("Registering convergence layer to paymaster"));
         vm.stopBroadcast();
 
         // unpack reform packages at the new convergence layer.
-        address deployedConvergenceLayer = Powers(payable(primaryLayer)).getRoleHolderAtIndex(3, 0); // role 3 = Convergence Layers
+        deployedConvergenceLayer = Powers(payable(primaryLayer)).getRoleHolderAtIndex(3, 0); // role 3 = Convergence Layers
         console2.log("Deployed Convergence Layer: ", deployedConvergenceLayer);
         unpackReformPackages(deployedConvergenceLayer, nonce, privateKeys);
         runSetupMandate(deployedConvergenceLayer, nonce, privateKeys);
 
         console2.log("Deployed Convergence Layer Successfully!");
     }
+
+
 }

@@ -20,7 +20,7 @@ abstract contract DeploySetup is DeployHelpers {
 
     address cedars = 0x328735d26e5Ada93610F0006c32abE2278c46211;
     address hannah = 0xEA223f81D7E74321370a77f1e44067bE8738B627;
-    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibnyrgzok373d4zveasq3jppz62jievfih7yyaiqdgmucwcznhqfa/";
+    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeifteuvxskmzqraitv3ho2gd7k5gbdjdt7uptxwqnojwituu5llcfy/";
     
     uint256 constitutionLength; 
     address[] targets;
@@ -36,7 +36,7 @@ abstract contract DeploySetup is DeployHelpers {
     // The mandate version to be used. 
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 5;
+    uint16 constant PATCH = 6;
 
     uint16 constant PACKAGE_SIZE = 7;  
 }

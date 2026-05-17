@@ -13,17 +13,16 @@ import { IPowers } from "@lib/powers-monorepo/solidity/src/interfaces/IPowers.so
 
 import { Soulbound1155, Soulbound1155Factory } from "@lib/powers-monorepo/solidity/src/helpers/Soulbound1155.sol";
 import { PowersFactory } from "@lib/powers-monorepo/solidity/src/helpers/PowersFactory.sol"; 
-import { ElectionRegistry } from "@lib/powers-monorepo/solidity/src/helpers/ElectionRegistry.sol";
+import { ElectionRegistry } from "@lib/powers-monorepo/solidity/src/helpers/ElectionRegistry.sol"; 
 import { DeploySetup } from "./DeploySetup.s.sol";
 import { Governed721 } from "@lib/powers-monorepo/solidity/src/helpers/Governed721.sol";
 import { Nominees } from "@lib/powers-monorepo/solidity/src/helpers/Nominees.sol";
 
 contract Helpers is DeploySetup {
     Soulbound1155 actvityToken;
-    Soulbound1155 meritBadges;
     Governed721 governed721;
     Nominees nominees;
-    ElectionRegistry electionRegistry;
+    ElectionRegistry electionRegistry; 
 
     function run() public { 
         console2.log("Deploying Organisation's Helper contracts...");
@@ -31,9 +30,6 @@ contract Helpers is DeploySetup {
 
         vm.startBroadcast();
         actvityToken = new Soulbound1155(
-            "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreighx6axdemwbjara3xhhfn5yaiktidgljykzx3vsrqtymicxxtgvi"
-        );
-        meritBadges = new Soulbound1155(
             "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafkreighx6axdemwbjara3xhhfn5yaiktidgljykzx3vsrqtymicxxtgvi"
         );
         nominees = new Nominees();
@@ -57,5 +53,4 @@ contract Helpers is DeploySetup {
     function getGoverned721() public view returns (address) {
         return address(governed721);
     }
- 
 } 

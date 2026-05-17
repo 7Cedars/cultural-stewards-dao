@@ -43,11 +43,12 @@ contract IdeasLayer is DeploySetup {
     function constitutePowers(
         address primaryLayer,
         address electionRegistry, 
+        address zkPassport_PowersRegistry,
         address safeTreasury,
         uint16 requestParticipantpowersId,
         uint16 requestNewConvergenceLayerId
     ) public {
-        _createConstitution(primaryLayer, electionRegistry, safeTreasury, requestParticipantpowersId, requestNewConvergenceLayerId);
+        _createConstitution(primaryLayer, electionRegistry, zkPassport_PowersRegistry, safeTreasury, requestParticipantpowersId, requestNewConvergenceLayerId);
         
         PowersTypes.MandateInitData[] memory constitutionPacked = packageInitData(constitution, PACKAGE_SIZE);
         vm.startBroadcast();
@@ -70,6 +71,7 @@ contract IdeasLayer is DeploySetup {
     function _createConstitution(
         address primaryLayer,
         address electionRegistry,
+        address zkPassport_PowersRegistry,
         address safeTreasury,
         uint16 requestParticipantpowersId,
         uint16 requestNewConvergenceLayerId
@@ -107,10 +109,30 @@ contract IdeasLayer is DeploySetup {
         );
         delete conditions;
 
+        // SECOND SETUP //
+        calldatas = new bytes[](5);
+        calldatas[0] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
+        calldatas[1] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, hannah);
+        calldatas[2] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, cedars);
+        calldatas[3] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, hannah);
+        calldatas[4] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
+
+        mandateCount++;
+        conditions.allowedRole = type(uint256).max; // = public.
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Second Setup: Assign Stewards and Assessors roles to cedars and hannah, revokes itself after execution",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers"),
+                config: abi.encode(calldatas),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
         //////////////////////////////////////////////////////////////////////
         //                      EXECUTIVE MANDATES                          //
         //////////////////////////////////////////////////////////////////////
- 
+
         // ASSIGN PARTICIPANT //
         uint16[] memory mandateIds = new uint16[](2);
         mandateIds[0] = mandateCount + 1;
@@ -128,7 +150,7 @@ contract IdeasLayer is DeploySetup {
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = Public
-        conditions.throttleExecution = minutesToBlocks(10, helperConfig.getBlocksPerHour(block.chainid)); // to avoid spamming, the mandate is throttled.
+        conditions.throttleExecution = minutesToBlocks(1, helperConfig.getBlocksPerHour(block.chainid)); // to avoid spamming, the mandate is throttled.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Apply for Participant role: Anyone can apply for a Participant role to the Ideas Layer by submitting an application.",
@@ -216,13 +238,12 @@ contract IdeasLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Send request: Stewards can send the request to create a new Convergence Layer to the Primary Layer",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Advanced"),
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Simple"),
                 config: abi.encode( 
-                    primaryLayer, // target is its own powers contract
-                    IPowers.propose.selector, // function selector to call
-                    abi.encode(requestNewConvergenceLayerId), // params before (role id 1 = Participants) // the static params
-                    inputParams, // the dynamic params (the input params of the parent mandate)
-                    abi.encode(12345, "Requesting creation of new Convergence Layer from Primary Layer") // no args after
+                    primaryLayer, // target is the Primary Layer's powers contract
+                    requestNewConvergenceLayerId, // function selector to call // params before (role id 1 = Participants) // the static params
+                    "Requesting creation of new Convergence Layer from Ideas Layer",
+                    inputParams // the dynamic params (the input params of the parent mandate) 
                 ),
                 conditions: conditions
             })
@@ -330,6 +351,124 @@ contract IdeasLayer is DeploySetup {
                 conditions: conditions
             })
         ); 
+        delete conditions;
+
+        // PROPOSE LEGAL INTERFACER FOR CONVERGENCE LAYER //
+        mandateIds = new uint16[](4);
+        mandateIds[0] = mandateCount + 1;
+        mandateIds[1] = mandateCount + 2;
+        mandateIds[2] = mandateCount + 3;
+        mandateIds[3] = mandateCount + 4;
+
+        flows.push(PowersTypes.Flow({
+            nameDescription: "Propose Legal Interfacer for Convergence Layer: Candidates prove eligibility via ZK-Passport (age >= 18, GBR passport). The Primary Layer can veto within a 5-minute window. After the veto window passes without a veto, the nominee is automatically assigned the Legal Interfacer role on the target Convergence Layer. All mandates share calldata format: abi.encode(address PowersTarget, uint16 MandateIdTarget, address AccountToCheck).",
+            mandateIds: mandateIds
+        }));
+
+        // NB: All four mandates in this flow share calldata format:
+        //     abi.encode(address PowersTarget, uint16 MandateIdTarget, address AccountToCheck)
+        //     PowersTarget    = target Convergence Layer address (user-supplied at execution time)
+        //     MandateIdTarget = Legal Interfacer assignment mandate ID on that CL
+        //     AccountToCheck  = candidate's own address (UI auto-fills from msg.sender)
+        //     ZKPassport_Check reads AccountToCheck from position [2] (params_.length = 2).
+
+        // Shared prefix params — prepended before "address AccountToCheck" in ZKP mandates.
+        string[] memory legalInterfacerBaseParams = new string[](2);
+        legalInterfacerBaseParams[0] = "address PowersTarget";
+        legalInterfacerBaseParams[1] = "uint16 MandateIdTarget";
+
+        // Public: ZKP age check (>= 18)
+        // ZKPassport_Check.initializeMandate appends "address AccountToCheck" last, yielding
+        // full inputParams = ["address PowersTarget", "uint16 MandateIdTarget", "address AccountToCheck"].
+        mandateCount++;
+        conditions.allowedRole = type(uint256).max; // = public
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "ZK-Passport Check Age: Anyone aged 18 or over can begin the Legal Interfacer nomination process for a Convergence Layer.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ZKPassport_Check"),
+                config: abi.encode(
+                    legalInterfacerBaseParams, // ZKPassport_Check appends "address AccountToCheck" as last param
+                    zkPassport_PowersRegistry,
+                    60 * 60 * 24 * 90, // 90-day proof validity window
+                    false, // facematch not required
+                    bytes4(keccak256("isAgeAboveOrEqual(uint8)")),
+                    abi.encode(uint8(18))
+                ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Public: ZKP issuing country check (GBR only)
+        mandateCount++;
+        conditions.allowedRole = type(uint256).max; // = public
+        conditions.needFulfilled = mandateCount - 1; // = ZKP age check
+        {
+            string[] memory gbrList = new string[](1);
+            gbrList[0] = "GBR";
+            constitution.push(
+                PowersTypes.MandateInitData({
+                    nameDescription: "ZK-Passport Check Issuing Country: Candidates who passed the age check must also hold a GBR passport to be nominated as Legal Interfacer.",
+                    targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ZKPassport_Check"),
+                    config: abi.encode(
+                        legalInterfacerBaseParams, // ZKPassport_Check appends "address AccountToCheck" as last param
+                        zkPassport_PowersRegistry,
+                        60 * 60 * 24 * 90, // 90-day proof validity window
+                        false, // facematch not required
+                        bytes4(keccak256("isIssuingCountryIn(string[])")),
+                        abi.encode(gbrList)
+                    ),
+                    conditions: conditions
+                })
+            );
+        }
+        delete conditions;
+
+        // Primary Layer (role 6): Veto Legal Interfacer Proposal within the timelock window
+        inputParams = new string[](3);
+        inputParams[0] = "address PowersTarget";
+        inputParams[1] = "uint16 MandateIdTarget";
+        inputParams[2] = "address AccountToCheck";
+        mandateCount++;
+        conditions.allowedRole = 6; // = Primary Layer
+        conditions.needFulfilled = mandateCount - 1; // = ZKP country check
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Veto Legal Interfacer Proposal: The Primary Layer can veto a ZKP-verified Legal Interfacer nominee within the 5-minute timelock window.",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+                config: abi.encode(inputParams),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // Public: Execute Legal Interfacer Assignment via ExternalAction_OnReturnValue.
+        // Caller supplies (PowersTarget, MandateIdTarget, AccountToCheck) — matching the ZKP mandate calldata.
+        // The ZKP country check return value (abi.encode(candidateAddress)) is forwarded to the CL prepended
+        // with role 3, so the CL receives abi.encode(uint256(3), candidateAddress) as its mandate calldata.
+        // NB: the CL's Ideas Layer role (role 0) must be assigned to the calling Ideas Layer instance at CL setup.
+        {
+            string[] memory legalInterfacerExtraParams = new string[](1);
+            legalInterfacerExtraParams[0] = "address AccountToCheck";
+            mandateCount++;
+            conditions.allowedRole = type(uint256).max; // = public (anyone can trigger after timelock)
+            conditions.needFulfilled = mandateCount - 2; // = ZKP country check (mandate B)
+            conditions.needNotFulfilled = mandateCount - 1; // = PL veto mandate (mandate C)
+            conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // 5-min veto window
+            constitution.push(
+                PowersTypes.MandateInitData({
+                    nameDescription: "Execute Legal Interfacer Assignment: After the 5-minute veto window passes without a Primary Layer veto, calls the target Convergence Layer (PowersTarget) to assign the Legal Interfacer role.",
+                    targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_OnReturnValue"),
+                    config: abi.encode(
+                        abi.encode(uint256(3)), // paramsBefore: role 3 = Legal Interfacer, prepended to ZKP return value
+                        legalInterfacerExtraParams, // extra user param; initializeMandate also prepends PowersTarget + MandateIdTarget
+                        uint16(mandateCount - 2), // parentMandateId = ZKP country check (mandate B)
+                        abi.encode() // no paramsAfter
+                    ),
+                    conditions: conditions
+                })
+            );
+        }
         delete conditions;
 
         // ASSIGN ASSESSORS //

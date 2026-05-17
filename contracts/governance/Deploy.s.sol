@@ -37,10 +37,11 @@ contract Deploy is Script {
     ConvergenceLayer convergenceLayerFactory;
     Helpers helpers; 
     Initialise initialise;
-
+    address zkPassport_PowersRegistry; 
+    
     string[] public ideasLayerNames = ["Seeing", "Making", "Listening", "Telling", "Remembering", "Imagining", "Tending"];
     
-    function run() external returns (PrimaryLayer, DigitalLayer, IdeasLayer, ConvergenceLayer) { 
+    function run() external returns (address primaryAddress, address digitalAddress, address ideasLayerFactoryAddress, address convergenceLayerFactoryAddress) { 
         // step 1, setup. 
         primaryLayer = new PrimaryLayer();
         digitalLayer = new DigitalLayer();
@@ -48,6 +49,7 @@ contract Deploy is Script {
         convergenceLayerFactory = new ConvergenceLayer();
         helpers = new Helpers();
         initialise = new Initialise();
+        zkPassport_PowersRegistry = 0xc554958CE7559eCcD08AEdbB8b72B1BE54Fde9ed; 
 
         uint256[] memory privateKeys = new uint256[](3);
         privateKeys[0] = vm.envUint("TEST_ACCOUNT_KEY_1");
@@ -78,6 +80,7 @@ contract Deploy is Script {
         ideasLayerFactory.constitutePowers(
             primaryLayer.getAddress(),
             helpers.getElectionRegistry(),
+            zkPassport_PowersRegistry, 
             primaryLayer.getTreasury(),
             primaryLayer.requestParticipantpowersId(),
             primaryLayer.requestNewConvergenceLayerId()
@@ -85,6 +88,7 @@ contract Deploy is Script {
         convergenceLayerFactory.constitutePowers(
             primaryLayer.getAddress(),
             helpers.getGoverned721(),
+            zkPassport_PowersRegistry, 
             helpers.getActivityToken(),
             helpers.getNominees(),
             primaryLayer.mintPoapTokenId(),
@@ -102,6 +106,6 @@ contract Deploy is Script {
  
         console2.log("Success! All contracts successfully deployed.");
 
-        return (primaryLayer, digitalLayer, ideasLayerFactory, convergenceLayerFactory);
+        return (primaryLayer.getAddress(), digitalLayer.getAddress(), ideasLayerFactory.getAddress(), convergenceLayerFactory.getAddress());
     }
 }

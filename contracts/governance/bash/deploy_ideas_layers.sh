@@ -19,7 +19,7 @@ PRIMARY_LAYER="${1:-$PRIMARY_LAYER}"
 NONCE="${2:-$NONCE}"
 IDEAS_NAMES="${3:-$IDEAS_NAMES}"
 PRIVATE_KEYS="${4:-$PRIVATE_KEYS}"
-EXTRA_ARGS="${@:5}" # Any additional arguments like --broadcast, --private-key, etc.
+EXTRA_ARGS=("${@:5}") # Any additional arguments like --broadcast, --private-key, etc.
 
 if [ -z "$PRIMARY_LAYER" ] || [ -z "$NONCE" ] || [ -z "$IDEAS_NAMES" ] || [ -z "$PRIVATE_KEYS" ]; then
     echo "Error: Missing required arguments."
@@ -55,14 +55,14 @@ echo "[1/4] Executing runSetupMandate on Primary Layer..."
 forge script governance/actions/Initialise.s.sol:Initialise \
     --sig "runSetupMandate(address,uint256,uint256[])" \
     "$PRIMARY_LAYER" "$NONCE" "$PRIVATE_KEYS" \
-    $EXTRA_ARGS
+    "${EXTRA_ARGS[@]}"
 echo "runSetupMandate completed successfully."
 
 echo "[2/4] Executing deployIdeasLayer1..."
 forge script governance/actions/Initialise.s.sol:Initialise \
     --sig "deployIdeasLayer1(address,uint256,string[],uint256[])" \
     "$PRIMARY_LAYER" "$NONCE" "$IDEAS_NAMES" "$PRIVATE_KEYS" \
-    $EXTRA_ARGS
+    "${EXTRA_ARGS[@]}"
 echo "deployIdeasLayer1 completed successfully."
 
 echo ""
@@ -73,7 +73,7 @@ echo "[3/4] Executing deployIdeasLayer2..."
 forge script governance/actions/Initialise.s.sol:Initialise \
     --sig "deployIdeasLayer2(address,uint256,string[],uint256[])" \
     "$PRIMARY_LAYER" "$NONCE" "$IDEAS_NAMES" "$PRIVATE_KEYS" \
-    $EXTRA_ARGS
+    "${EXTRA_ARGS[@]}"
 echo "deployIdeasLayer2 completed successfully."
 
 echo ""
@@ -84,7 +84,7 @@ echo "[4/4] Executing deployIdeasLayer3..."
 forge script governance/actions/Initialise.s.sol:Initialise \
     --sig "deployIdeasLayer3(address,uint256,string[],uint256[])" \
     "$PRIMARY_LAYER" "$NONCE" "$IDEAS_NAMES" "$PRIVATE_KEYS" \
-    $EXTRA_ARGS
+    "${EXTRA_ARGS[@]}"
 echo "deployIdeasLayer3 completed successfully."
 
 echo ""

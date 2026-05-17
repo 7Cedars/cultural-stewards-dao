@@ -30,6 +30,7 @@ contract PrimaryLayer is DeploySetup {
     uint16 public requestAllowanceDigitalLayerId;
     uint16 public mintPoapTokenId;
     uint16 public requestParticipantpowersId;
+    uint16 public vetoConvergenceLayerMandateId;
 
     uint256 i; 
     uint256 j; 
@@ -224,6 +225,24 @@ contract PrimaryLayer is DeploySetup {
                     values,
                     calldatas
                     ),
+                conditions: conditions
+            })
+        );
+        delete conditions;
+
+        // SECOND SETUP //
+        calldatas = new bytes[](3);
+        calldatas[0] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
+        calldatas[1] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, hannah);
+        calldatas[2] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
+
+        mandateCount++;
+        conditions.allowedRole = type(uint256).max; // = public.
+        constitution.push(
+            PowersTypes.MandateInitData({
+                nameDescription: "Second Setup: Assign Stewards role to cedars and hannah, revokes itself after execution",
+                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers"),
+                config: abi.encode(calldatas),
                 conditions: conditions
             })
         );
@@ -432,11 +451,11 @@ contract PrimaryLayer is DeploySetup {
             })
         );
         delete conditions;
+        vetoConvergenceLayerMandateId = mandateCount; // this mandate id is needed for the execution mandate as a condition.
 
         // Ideas Layer: Create Convergence Layer
         mandateCount++;
         conditions.allowedRole = 4; // = (a single) Ideas Layer
-        conditions.timelock = minutesToBlocks(7, helperConfig.getBlocksPerHour(block.chainid)); // = 7 minutes / days. Note: timelock allows for veto to be cast.
         conditions.needNotFulfilled = mandateCount - 1; // need the previous mandate NOT to be fulfilled.
         constitution.push(
             PowersTypes.MandateInitData({
@@ -456,7 +475,9 @@ contract PrimaryLayer is DeploySetup {
         // Primary Steward: Assign role Id to Convergence Layer //
         mandateCount++;
         conditions.allowedRole = 2; // = Any Steward
-        conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled.
+        conditions.needNotFulfilled = vetoConvergenceLayerMandateId; // need the veto mandate NOT to be fulfilled.
+        conditions.needFulfilled = requestNewConvergenceLayerId; // need the previous mandate to be fulfilled.
+        conditions.timelock = minutesToBlocks(4, helperConfig.getBlocksPerHour(block.chainid)); // = 7 minutes / days. Note: timelock allows for veto to be cast.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign role Id: Assign role Id 3 to Convergence Layer",
@@ -477,7 +498,9 @@ contract PrimaryLayer is DeploySetup {
         // Primary Steward: Assign Delegate status to Convergence Layer //
         mandateCount++;
         conditions.allowedRole = 2; // = Any Steward
-        conditions.needFulfilled = mandateCount - 2; // need the Convergence Layer to have been created.
+        conditions.needNotFulfilled = vetoConvergenceLayerMandateId; // need the veto mandate NOT to be fulfilled.
+        conditions.needFulfilled = requestNewConvergenceLayerId; // need the Convergence Layer to have been created.
+        conditions.timelock = minutesToBlocks(4, helperConfig.getBlocksPerHour(block.chainid)); // = 7 minutes / days. Note: timelock allows for veto to be cast.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Delegate status: Assign delegate status at Safe treasury to the Convergence Layer",
@@ -498,7 +521,9 @@ contract PrimaryLayer is DeploySetup {
         // Primary Steward: Register Convergence layer to paymaster //
         mandateCount++;
         conditions.allowedRole = 2; // = Primary Steward
-        conditions.needFulfilled = mandateCount - 3; // Need convergence layer to have been deployed.
+        conditions.needNotFulfilled = vetoConvergenceLayerMandateId; // need the veto mandate NOT to be fulfilled.
+        conditions.needFulfilled = requestNewConvergenceLayerId; // Need convergence layer to have been deployed.
+        conditions.timelock = minutesToBlocks(4, helperConfig.getBlocksPerHour(block.chainid)); // = 4 minutes / days. Note: timelock allows for veto to be cast.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Register Convergence Layer to Paymaster: Register the new Convergence Layer to the paymaster as a sponsored target, this means gas cost for interacting with the new Convergence Layer can be sponsored by the paymaster",
@@ -519,7 +544,9 @@ contract PrimaryLayer is DeploySetup {
         // Primary Steward: assign convergence role ID to new layer at digital layer.   //
         mandateCount++;
         conditions.allowedRole = 2; // = Primary Steward
-        conditions.needFulfilled = mandateCount - 3; // Need convergence layer to have been deployed.
+        conditions.timelock = minutesToBlocks(4, helperConfig.getBlocksPerHour(block.chainid));  
+        conditions.needNotFulfilled = vetoConvergenceLayerMandateId; // need the veto mandate NOT to be fulfilled.
+        conditions.needFulfilled = requestNewConvergenceLayerId; // Need convergence layer to have been deployed.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Convergence Layer to Digital Layer: Assign the new Convergence Layer as a sponsored target to the Digital Layer, this means that the Convergence Layer can call functions on the Digital Layer with the paymaster sponsoring the gas cost.",
@@ -634,99 +661,6 @@ contract PrimaryLayer is DeploySetup {
         );
         delete conditions;
 
-
-        // ASSIGN LEGAL REPRESENTATIVE ROLE TO CONVERGENCE SUB-LAYER //
-        mandateIds = new uint16[](4);
-        mandateIds[0] = mandateCount + 1;
-        mandateIds[1] = mandateCount + 2;
-        mandateIds[2] = mandateCount + 3;
-        mandateIds[3] = mandateCount + 4;
-
-        flows.push(PowersTypes.Flow({
-            nameDescription: "Assign legal representative role to Convergence Layer: This flow includes the proposal and assigning of the legal representative role for the Convergence Layer. To propose a legal representative, an address needs to pass two ZKP checks (age and issuing country of passport) and be proposed by an Ideas Layer. The legal representative can then be assigned by any Steward. This flow can be triggered by any Ideas Layer, but requires the execution of mandates by the Primary Steward, so effectively the Primary Steward have the final say.",
-            mandateIds: mandateIds
-        }));
-
-        inputParams = new string[](2);
-        inputParams[0] = "address ConvergenceSubLayer"; // the address of the Convergence Layer for which the legal representative is being proposed. This is needed to link the mandate to the correct chain, and to be able to reference the LAYER in the next mandate.
-        inputParams[1] = "uint16 assignRepMandateId"; // the mandate id of the next mandate (assigning the legal representative role) to link the mandates together.
-    
-        // anybody: do ZKP check: age > 18 
-        mandateCount++;
-        conditions.allowedRole = type(uint256).max; // = public. anyone can pass the ZKP check to propose a legal representative for the Convergence Layer.
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "ZK-Passport Check Age: Anyone over the age of 18 can propose to be a legal representative for the Convergence Layer",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ZKPassport_Check"),
-                config: abi.encode(
-                    inputParams,
-                    helperConfig.getZkPassportRootRegistry(block.chainid), // the address of the ZK-Passport root registry contract, which is needed to verify the ZKPs. This is set in the helper config for each chain.
-                    60 * 60 * 24 * 90, // the time window in which the ZKP proof needs to have been created. This is three months.  
-                    false, // no facematch needed for now 
-                    bytes4(keccak256("isAgeAboveOrEqual(uint8)")),  
-                    abi.encode(18) // the input for the zkp check (age > 18) 
-                    ),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
-        // anybody: do ZKP check: Issuing country passport check: GBR
-        mandateCount++;
-        conditions.allowedRole = type(uint256).max; // = public. anyone can pass the ZKP check to propose a legal representative for the Convergence Layer.
-        conditions.needFulfilled = mandateCount - 1; // need the age check to have been fulfilled.
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "ZK-Passport Check Issuing Country: Anyone with a GBR passport can propose to be a legal representative for the Convergence Layer",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ZKPassport_Check"),
-                config: abi.encode(
-                    inputParams,
-                    helperConfig.getZkPassportRootRegistry(block.chainid), // the address of the ZK-Passport root registry contract, which is needed to verify the ZKPs. This is set in the helper config for each chain.
-                    60 * 60 * 24 * 90, // the time window in which the ZKP proof needs to have been created. This is three months.  
-                    false, // no facematch needed for now
-                    bytes4(keccak256("isIssuingCountryIn(string[])")),
-                    abi.encode(["GBR"]) // the input for the zkp check (issuing country = GBR) 
-                    ),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-        
-        // Ideas SubLAYER: select one of the people that passed the ZKP check. Note that this can be any of Ideas Layers
-        inputParams = new string[](3);
-        inputParams[0] = "address ConvergenceSubLayer"; // the address of the Convergence Layer for which the legal representative is being proposed. This is needed to link the mandate to the correct chain, and to be able to reference the LAYER in the next mandate.
-        inputParams[1] = "uint16 assignRepMandateId"; // the mandate id of the next mandate (assigning the legal representative role) to link the mandates together.
-        inputParams[2] = "address ProposedLegalRep"; // the address proposed as legal
-        
-        mandateCount++;
-        conditions.allowedRole = 4; // = Proposed by a Ideas Layer. can propose a legal representative for the Convergence Layer.
-        conditions.needFulfilled = mandateCount - 1; // need both ZKP checks to have been fulfilled.
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Propose Legal Representative: Propose an address as legal representative for the Convergence Layer",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
-                config: abi.encode(inputParams),
-                conditions: conditions
-            })
-        );
-        delete conditions;
-
-        // Primary Steward: assign legal rep role at convergence layer. 
-        inputParams = new string[](1);
-        inputParams[0] = "address ProposedLegalRep"; // the address proposed as legal
-
-        mandateCount++;
-        conditions.allowedRole = 2; // = Primary Steward. Any Steward can assign the legal representative role for the Convergence Layer.
-        conditions.needFulfilled = mandateCount - 1; // need the proposal of the legal representative to have been fulfilled.
-        constitution.push(
-            PowersTypes.MandateInitData({
-                nameDescription: "Assign Legal Representative Role: Assign the legal representative role at the Convergence Layer to the proposed address",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Flexible"),
-                config: abi.encode(inputParams),
-                conditions: conditions
-            })
-        );
-        delete conditions;
 
         // ASSIGN ADDITIONAL ALLOWANCE TO CONVERGENCE LAYER //
         mandateIds = new uint16[](3);
