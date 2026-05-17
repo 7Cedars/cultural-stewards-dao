@@ -300,7 +300,9 @@ update-builds:
 
 # Deployment arguments for different networks
 ANVIL_DEPLOY_ARGS := --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KEY_0) --broadcast --ffi -vv 
-SEPOLIA_DEPLOY_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 11155111 --ffi -vv
+
+SEPOLIA_DEPLOY_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast -vv
+
 ARB_SEPOLIA_DEPLOY_ARGS := --rpc-url $(ARB_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 421614 --verify --ffi -vv 
 OPT_SEPOLIA_DEPLOY_ARGS := --rpc-url $(OPT_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --ffi -vv
 
@@ -313,7 +315,7 @@ fork-anvil :
 	anvil --fork-url $(OPT_SEPOLIA_RPC_URL) --block-time 1 --chain-id 31337   
 
 governance-deploy : 
-	@echo "Deploying example contracts..."
+	@echo "Deploying Cultural Stewardship..."
 	forge script governance/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
 
 ideas-layer-deploy : 

@@ -76,7 +76,7 @@ contract IdeasLayer is DeploySetup {
         uint16 requestParticipantpowersId,
         uint16 requestNewConvergenceLayerId
     ) internal {
-        mandateCount = 4; // resetting mandate count.
+        mandateCount = 5; // resetting mandate count.
 
         //////////////////////////////////////////////////////////////////////
         //                              SETUP                               //

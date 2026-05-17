@@ -212,9 +212,9 @@ contract DigitalLayer is DeploySetup {
         }));
 
         inputParams = new string[](3);
-        inputParams[0] = "address Token";
-        inputParams[1] = "uint256 Amount";
-        inputParams[2] = "address PayableTo";
+        inputParams[0] = "address token";
+        inputParams[1] = "uint256 amount";
+        inputParams[2] = "address payableTo";
 
         // Public: Submit a receipt (Payment Reimbursement - After Action)
         mandateCount++;
@@ -257,9 +257,9 @@ contract DigitalLayer is DeploySetup {
         }));
 
         inputParams = new string[](3);
-        inputParams[0] = "address Token";
-        inputParams[1] = "uint256 Amount";
-        inputParams[2] = "address PayableTo";
+        inputParams[0] = "address token";
+        inputParams[1] = "uint256 amount";
+        inputParams[2] = "address payableTo";
 
         // Public: Submit a receipt (Payment Reimbursement - After Action)
         mandateCount++;

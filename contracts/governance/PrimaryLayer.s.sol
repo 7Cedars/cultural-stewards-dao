@@ -870,7 +870,7 @@ contract PrimaryLayer is DeploySetup {
 
         // Ideas LAYER: request Participant - statement of intent.
         inputParams = new string[](1);
-        inputParams[0] = "uint256[] TokenIds";
+        inputParams[0] = "uint256[] tokenIds";
 
         mandateCount++;
         conditions.allowedRole = 4; // = ideas layer
