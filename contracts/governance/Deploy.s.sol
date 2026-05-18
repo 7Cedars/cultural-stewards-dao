@@ -22,7 +22,6 @@ import { PowersDeployer } from "@lib/powers-monorepo/solidity/src/helpers/Powers
 import { PowersPaymaster } from "@lib/powers-monorepo/solidity/src/helpers/PowersPaymaster.sol";
 
 import { Helpers } from "./Helpers.s.sol";
-import { Initialise } from "./actions/Initialise.s.sol";
 import { PrimaryLayer } from "./PrimaryLayer.s.sol";
 import { DigitalLayer } from "./DigitalLayer.s.sol";
 import { IdeasLayer } from "./IdeasLayer.s.sol";
@@ -36,7 +35,6 @@ contract Deploy is Script {
     IdeasLayer ideasLayerFactory;
     ConvergenceLayer convergenceLayerFactory;
     Helpers helpers; 
-    Initialise initialise;
     address zkPassport_PowersRegistry; 
     
     string[] public ideasLayerNames = ["Seeing", "Making", "Listening", "Telling", "Remembering", "Imagining", "Tending"];
@@ -48,7 +46,6 @@ contract Deploy is Script {
         ideasLayerFactory = new IdeasLayer();
         convergenceLayerFactory = new ConvergenceLayer();
         helpers = new Helpers();
-        initialise = new Initialise();
         zkPassport_PowersRegistry = 0xc554958CE7559eCcD08AEdbB8b72B1BE54Fde9ed; 
 
         uint256[] memory privateKeys = new uint256[](3);

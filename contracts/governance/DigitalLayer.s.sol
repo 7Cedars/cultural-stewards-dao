@@ -86,6 +86,22 @@ contract DigitalLayer is DeploySetup {
         return assignConvergenceLayer;
     }
 
+    function _initMandateAddresses() internal {
+        m_Adopt_Mandates = registry.getMandateAddress(MAJOR, MINOR, PATCH, "Adopt_Mandates");
+        m_BespokeAction_Advanced = registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Advanced");
+        m_BespokeAction_OnReturnValue = registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_OnReturnValue");
+        m_BespokeAction_Simple = registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple");
+        m_ElectionRegistry_CreateVoteMandate = registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_CreateVoteMandate");
+        m_ElectionRegistry_Nominate = registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_Nominate");
+        m_ElectionRegistry_Tally = registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_Tally");
+        m_ElectionRegistry_Vote = registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_Vote");
+        m_ExternalAction_Simple = registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Simple");
+        m_PresetActions_OnOwnPowers = registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers");
+        m_SafeAllowance_Transfer = registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_Transfer");
+        m_Safe_RecoverTokens = registry.getMandateAddress(MAJOR, MINOR, PATCH, "Safe_RecoverTokens");
+        m_StatementOfIntent = registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent");
+    }
+
     //////////////////////////////////////////////////////////////////////
     //                        CONSTITUTION                              //
     //////////////////////////////////////////////////////////////////////
@@ -94,7 +110,9 @@ contract DigitalLayer is DeploySetup {
         address electionRegistry,
         uint16 requestAllowanceDigitalLayerId
     ) internal {
+        blocksPerHour = helperConfig.getBlocksPerHour(block.chainid);
         mandateCount = 0; // resetting mandate count.
+        if (m_StatementOfIntent == address(0)) _initMandateAddresses();
 
         //////////////////////////////////////////////////////////////////////
         //                              SETUP                               //
@@ -118,7 +136,7 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels and revokes itself after execution",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers"),
+                targetMandate: m_PresetActions_OnOwnPowers,
                 config: abi.encode(calldatas),
                 conditions: conditions
             })
@@ -138,7 +156,7 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Second Setup: Assign Write and Maintain roles to cedars and hannah, revokes itself after execution",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers"),
+                targetMandate: m_PresetActions_OnOwnPowers,
                 config: abi.encode(calldatas),
                 conditions: conditions
             })
@@ -172,7 +190,7 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto request allowance: Writers can veto a request for additional allowance", //
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+                targetMandate: m_StatementOfIntent,
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -183,13 +201,13 @@ contract DigitalLayer is DeploySetup {
         mandateCount++;
         conditions.allowedRole = 2; // Repository admins 
         conditions.needNotFulfilled = mandateCount - 1;
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour);
         conditions.succeedAt = 66;
         conditions.quorum = 80;
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request allowance: Repository admins can request an allowance from the Primary Layer Safe Treasury.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Simple"),
+                targetMandate: m_ExternalAction_Simple,
                 config: abi.encode(
                     address(primaryLayer), // target contract
                     requestAllowanceDigitalLayerId, // parent mandate id (the request allowance at primary Layer mandate)
@@ -222,7 +240,7 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Submit a Receipt: Anyone can submit a receipt for payment reimbursement.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+                targetMandate: m_StatementOfIntent,
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -232,14 +250,14 @@ contract DigitalLayer is DeploySetup {
         // Repository admins: Approve Payment of Receipt
         mandateCount++;
         conditions.allowedRole = 2; // Repository admins
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour);
         conditions.succeedAt = 67;
         conditions.quorum = 50;
         conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Approve payment of receipt: Execute a transaction from the Safe Treasury.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_Transfer"),
+                targetMandate: m_SafeAllowance_Transfer,
                 config: abi.encode(helperConfig.getSafeAllowanceModule(block.chainid), treasury),
                 conditions: conditions
             })
@@ -267,7 +285,7 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Submit a Request: Any Convergence Layer can submit a request for project payments in their name.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+                targetMandate: m_StatementOfIntent,
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -277,14 +295,14 @@ contract DigitalLayer is DeploySetup {
         // Repository admins: Approve Payment of Receipt
         mandateCount++;
         conditions.allowedRole = 2; // Repository admins
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour);
         conditions.succeedAt = 61;
         conditions.quorum = 40;
         conditions.needFulfilled = mandateCount - 1; // need the previous mandate to be fulfilled.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Approve payment for request: Executes a transaction from the Safe Treasury.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_Transfer"),
+                targetMandate: m_SafeAllowance_Transfer,
                 config: abi.encode(helperConfig.getSafeAllowanceModule(block.chainid), treasury),
                 conditions: conditions
             })
@@ -313,7 +331,7 @@ contract DigitalLayer is DeploySetup {
         // // Public: Apply for Writer role
         // mandateCount++;
         // conditions.allowedRole = type(uint256).max; // Public
-        // conditions.throttleExecution = minutesToBlocks(3, helperConfig.getBlocksPerHour(block.chainid)); // to avoid spamming, the mandate is throttled.
+        // conditions.throttleExecution = minutesToBlocks(3, blocksPerHour); // to avoid spamming, the mandate is throttled.
         // constitution.push(
         //     PowersTypes.MandateInitData({
         //         nameDescription: "Apply for Writer Role: Anyone can claim Writer roles based on their GitHub contributions to the Cultural Stewards's repository (WIP)", // crrently the path is set at cedars/powers
@@ -360,13 +378,13 @@ contract DigitalLayer is DeploySetup {
         // Writers: veto Revoke Writer
         mandateCount++;
         conditions.allowedRole = 1; // = Writers
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Revoke Writer: Writers can veto revoking Writer from other Writers.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+                targetMandate: m_StatementOfIntent,
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -376,15 +394,15 @@ contract DigitalLayer is DeploySetup {
         // Executives: Revoke Writer
         mandateCount++;
         conditions.allowedRole = 2; // = Executives
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour); // = 5 minutes / days
         conditions.succeedAt = 51; // = 51% majority
         conditions.quorum = 77; // = Note: high threshold.
-        conditions.timelock = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 10 minutes timelock before execution.
+        conditions.timelock = minutesToBlocks(5, blocksPerHour); // = 10 minutes timelock before execution.
         conditions.needNotFulfilled = mandateCount - 1; // need the veto to have NOT been fulfilled.
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke Writer: Executives can revoke Writer role.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Advanced"),
+                targetMandate: m_BespokeAction_Advanced,
                 config: abi.encode(
                     address(powers), 
                     IPowers.revokeRole.selector, // function selector to call
@@ -417,11 +435,11 @@ contract DigitalLayer is DeploySetup {
         // Writers: create election
         mandateCount++;
         conditions.allowedRole = 1; // = Writers
-        conditions.throttleExecution = minutesToBlocks(120, helperConfig.getBlocksPerHour(block.chainid)); // = once every 2 hours
+        conditions.throttleExecution = minutesToBlocks(120, blocksPerHour); // = once every 2 hours
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Create a Convener election: an election for the convener role can be initiated be any Writer. After an election is created, participants have 5 minutes to nominate themselves.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
+                targetMandate: m_BespokeAction_Simple,
                 config: abi.encode(
                     electionRegistry, // election list contract
                     ElectionRegistry.createElection.selector, // selector
@@ -439,10 +457,10 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Open voting for Convener election: After five minutes of initiating an election, Writers can open the vote for a convener election. This will create a dedicated vote mandate. The vote will stay open for five minutes.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_CreateVoteMandate"),
+                targetMandate: m_ElectionRegistry_CreateVoteMandate,
                 config: abi.encode(
                     electionRegistry, // election list contract
-                    registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_Vote"), // the vote mandate address
+                    m_ElectionRegistry_Vote, // the vote mandate address
                     1, // the max number of votes a voter can cast
                     1 // the role Id allowed to vote (Writers)
                 ),
@@ -458,7 +476,7 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Tally Convener elections: After five minutes of opening the vote, tally the results and assign the Convener role to the winners.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_Tally"),
+                targetMandate: m_ElectionRegistry_Tally,
                 config: abi.encode(
                     electionRegistry, // election list contract
                     2, // RoleId for Repository admins
@@ -476,7 +494,7 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Clean up Convener election: After five minutes of tallying the results, clean up related mandates.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_OnReturnValue"),
+                targetMandate: m_BespokeAction_OnReturnValue,
                 config: abi.encode(
                     address(powers), // target contract
                     IPowers.revokeMandate.selector, // function selector to call
@@ -496,7 +514,7 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate for election: any Writer can nominate for an election.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_Nominate"),
+                targetMandate: m_ElectionRegistry_Nominate,
                 config: abi.encode(
                     electionRegistry, // election list contract
                     true // nominate as candidate
@@ -512,7 +530,7 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke nomination for election: any Writer can revoke their nomination for an election.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ElectionRegistry_Nominate"),
+                targetMandate: m_ElectionRegistry_Nominate,
                 config: abi.encode(
                     electionRegistry, // election list contract
                     false // revoke nomination
@@ -545,13 +563,13 @@ contract DigitalLayer is DeploySetup {
         // Writers: initiate Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 1; // Writers
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour);
         conditions.succeedAt = 66;
         conditions.quorum = 77;
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initiate Adopting Mandates: Writers can initiate adopting new mandates",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+                targetMandate: m_StatementOfIntent,
                 config: abi.encode(adoptMandatesParams),
                 conditions: conditions
             })
@@ -565,7 +583,7 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Adopting Mandates: primaryLayer can veto proposals to adopt new mandates", 
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+                targetMandate: m_StatementOfIntent,
                 config: abi.encode(adoptMandatesParams),
                 conditions: conditions
             })
@@ -577,13 +595,13 @@ contract DigitalLayer is DeploySetup {
         conditions.allowedRole = 2; // Repository admins
         conditions.needFulfilled = mandateCount - 2;
         conditions.needNotFulfilled = mandateCount - 1;
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour);
         conditions.succeedAt = 66;
         conditions.quorum = 80;
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt new Mandates: Repository admins can adopt new mandates into the organization",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Adopt_Mandates"),
+                targetMandate: m_Adopt_Mandates,
                 config: abi.encode(),
                 conditions: conditions
             })
@@ -598,13 +616,13 @@ contract DigitalLayer is DeploySetup {
         // Repository admins: Update URI
         mandateCount++;
         conditions.allowedRole = 2; // = Repository admins
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour); // = 5 minutes / days
         conditions.succeedAt = 66; // = 2/3 majority
         conditions.quorum = 66; // = 66% quorum
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Update URI: Set allowed token for Convergence Layer",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
+                targetMandate: m_BespokeAction_Simple,
                 config: abi.encode(
                     address(powers), // target address is its own powers contract
                     Powers.setUri.selector, // function selector to call
@@ -621,7 +639,7 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Transfer tokens to treasury: Any tokens accidently sent to the Layer can be recovered by sending them to the treasury",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Safe_RecoverTokens"),
+                targetMandate: m_Safe_RecoverTokens,
                 config: abi.encode(
                     treasury, // this should be the safe treasury!
                     helperConfig.getSafeAllowanceModule(block.chainid) // allowance module address
@@ -640,7 +658,7 @@ contract DigitalLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Convergence Layer Role: The Primary Layer can assign the Convergence Layer role to accounts of their choosing. This is necessary for the Convergence Layer to be able to submit requests for payments.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Advanced"),
+                targetMandate: m_BespokeAction_Advanced,
                 config: abi.encode(
                     address(0), 
                     IPowers.assignRole.selector, // function selector to call

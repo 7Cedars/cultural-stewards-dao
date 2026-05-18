@@ -66,6 +66,22 @@ contract ConvergenceLayer is DeploySetup {
         return address(powersFactory);
     }
 
+    function _initMandateAddresses() internal {
+        m_Adopt_Mandates = registry.getMandateAddress(MAJOR, MINOR, PATCH, "Adopt_Mandates");
+        m_BespokeAction_Advanced = registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Advanced");
+        m_BespokeAction_Simple = registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple");
+        m_ExternalAction_Simple = registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Simple");
+        m_GovernedToken_GatedAccess = registry.getMandateAddress(MAJOR, MINOR, PATCH, "GovernedToken_GatedAccess");
+        m_Nominate = registry.getMandateAddress(MAJOR, MINOR, PATCH, "Nominate");
+        m_PauseMandates = registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates");
+        m_PeerSelect = registry.getMandateAddress(MAJOR, MINOR, PATCH, "PeerSelect");
+        m_PresetActions_OnOwnPowers = registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers");
+        m_SafeAllowance_Transfer = registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_Transfer");
+        m_Safe_RecoverTokens = registry.getMandateAddress(MAJOR, MINOR, PATCH, "Safe_RecoverTokens");
+        m_StatementOfIntent = registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent");
+        m_ZKPassport_Check = registry.getMandateAddress(MAJOR, MINOR, PATCH, "ZKPassport_Check");
+    }
+
     //////////////////////////////////////////////////////////////////////
     //                        CONSTITUTION                              //
     //////////////////////////////////////////////////////////////////////
@@ -78,7 +94,9 @@ contract ConvergenceLayer is DeploySetup {
         uint16 mintPoapTokenId, 
         uint16 requestAllowanceConvergenceLayerId
     ) internal {
-        mandateCount = 3; // resetting mandate count. 
+        blocksPerHour = helperConfig.getBlocksPerHour(block.chainid);
+        mandateCount = 3; // resetting mandate count.
+        if (m_StatementOfIntent == address(0)) _initMandateAddresses();
         //////////////////////////////////////////////////////////////////////
         //                              SETUP                               //
         //////////////////////////////////////////////////////////////////////
@@ -103,7 +121,7 @@ contract ConvergenceLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initial Setup: Assign role labels and revokes itself after execution",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PresetActions_OnOwnPowers"),
+                targetMandate: m_PresetActions_OnOwnPowers,
                 config: abi.encode(calldatas),
                 conditions: conditions
             })
@@ -139,7 +157,7 @@ contract ConvergenceLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Sell NFT artwork: Stewards can sell NFT art works, which will automatically transfer from the owner of the NFT to the buyer and distribute payments according to splits set by the governed721DAO.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
+                targetMandate: m_BespokeAction_Simple,
                 config: abi.encode(
                     governed721,
                     Governed721.safeTransferFrom.selector,
@@ -173,7 +191,7 @@ contract ConvergenceLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto request allowance: Stewards can veto a request for additional allowance", //
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+                targetMandate: m_StatementOfIntent,
                 config: abi.encode(inputParams),
                 conditions: conditions
             })
@@ -184,13 +202,13 @@ contract ConvergenceLayer is DeploySetup {
         mandateCount++;
         conditions.allowedRole = 3; // Legal Interfacer 
         conditions.needNotFulfilled = mandateCount - 1;
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour);
         conditions.succeedAt = 66;
         conditions.quorum = 80;
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request allowance: Repository admins can request an allowance from the Primary Layer Safe Treasury.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Simple"),
+                targetMandate: m_ExternalAction_Simple,
                 config: abi.encode(
                     address(primaryLayer), // target contract
                     requestAllowanceConvergenceLayerId, // parent mandate id (the request allowance at primary Layer mandate)
@@ -219,13 +237,13 @@ contract ConvergenceLayer is DeploySetup {
         // Stewards: Submit & approve Payment of Receipt
         mandateCount++;
         conditions.allowedRole = 2; // Stewards can propose and vote on receipts.   
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour);
         conditions.succeedAt = 67;
         conditions.quorum = 50; 
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Submit & Approve payment of receipt: Execute a transaction from the Safe Treasury.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "SafeAllowance_Transfer"),
+                targetMandate: m_SafeAllowance_Transfer,
                 config: abi.encode(helperConfig.getSafeAllowanceModule(block.chainid), treasury),
                 conditions: conditions
             })
@@ -253,7 +271,7 @@ contract ConvergenceLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Assign Legal Interfacer: The parent Ideas Layer can assign the Legal Interfacer role (role 3) to a ZKP-verified candidate. Called via ExternalAction_OnReturnValue after the Ideas Layer ZKP checks pass and the Primary Layer veto window expires.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Advanced"),
+                targetMandate: m_BespokeAction_Advanced,
                 config: abi.encode(
                     address(0), // target: own Powers contract
                     IPowers.assignRole.selector,
@@ -286,7 +304,7 @@ contract ConvergenceLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Mint POAP: Any Steward can mint a POAP.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ExternalAction_Simple"),
+                targetMandate: m_ExternalAction_Simple,
                 config: abi.encode(
                     address(primaryLayer),
                     uint16(mintPoapTokenId), // parent mandate id (the mint POAP token at Primary Layer mandate)
@@ -318,12 +336,12 @@ contract ConvergenceLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Request Membership: Anyone can become a member if they have sufficient POAPs minted through the primary Layer during the last 15 days.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "GovernedToken_GatedAccess"),
+                targetMandate: m_GovernedToken_GatedAccess,
                 config: abi.encode(
                     activityToken, // soulbound token contract
                     1, // attendee role Id
                     0, // checks if token is from address that holds role Id 0 (meaning the admin, which is the Layer itself).
-                    uint48(daysToBlocks(15, helperConfig.getBlocksPerHour(block.chainid))), // look back period in blocks = 15 days.
+                    uint48(daysToBlocks(15, blocksPerHour)), // look back period in blocks = 15 days.
                     uint48(1) // number of tokens required. Only one POAP needed for membership.
                 ),
                 conditions: conditions
@@ -352,7 +370,7 @@ contract ConvergenceLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "ZK-Passport Check Age: Anyone over the age of 18 can propose to be a Steward for the Convergence Layer",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "ZKPassport_Check"),
+                targetMandate: m_ZKPassport_Check,
                 config: abi.encode(
                     inputParams,
                     zkPassport_PowersRegistry, 
@@ -373,7 +391,7 @@ contract ConvergenceLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Nominate for selection: any member can nominate to be selected for Steward role.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Nominate"),
+                targetMandate: m_Nominate,
                 config: abi.encode(
                     nominees // election list contract
                 ),
@@ -391,7 +409,7 @@ contract ConvergenceLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Revoke nomination for election: Legal Interfacers can revoke nominations for Steward elections.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Advanced"),
+                targetMandate: m_BespokeAction_Advanced,
                 config: abi.encode(
                     nominees, // election list contract
                     Nominees.revokeNomination.selector,
@@ -406,13 +424,13 @@ contract ConvergenceLayer is DeploySetup {
 
         // Legal Interfacers: adopt peer select mandate to select Stewards from the pool of nominees. 
         mandateCount++;
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour); // = 5 minutes / days
         conditions.succeedAt = 51; // = simple majority
         conditions.quorum = 80; // = 80% quorum
         conditions.allowedRole = 3; // = legal Interfacers. Legal Interfacers can select Stewards from the pool of nominees through a peer selection process.
         constitution.push(PowersTypes.MandateInitData({
                 nameDescription: "Select Stewards: Legal Interfacers can select Stewards from the pool of nominees.",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PeerSelect"),
+                targetMandate: m_PeerSelect,
                 config: abi.encode(
                     uint8(3), // numberToSelect
                     uint256(2), // RoleId for Stewards
@@ -444,13 +462,13 @@ contract ConvergenceLayer is DeploySetup {
         // Members: initiate Adopting Mandates
         mandateCount++;
         conditions.allowedRole = 1; // Members
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour);
         conditions.succeedAt = 66;
         conditions.quorum = 77;
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Initiate Adopting Mandates: Members can initiate adopting new mandates",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+                targetMandate: m_StatementOfIntent,
                 config: abi.encode(adoptMandatesParams),
                 conditions: conditions
             })
@@ -464,7 +482,7 @@ contract ConvergenceLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Veto Adopting Mandates: primaryLayer can veto proposals to adopt new mandates", 
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "StatementOfIntent"),
+                targetMandate: m_StatementOfIntent,
                 config: abi.encode(adoptMandatesParams),
                 conditions: conditions
             })
@@ -476,13 +494,13 @@ contract ConvergenceLayer is DeploySetup {
         conditions.allowedRole = 2; // Stewards
         conditions.needFulfilled = mandateCount - 2;
         conditions.needNotFulfilled = mandateCount - 1;
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour);
         conditions.succeedAt = 66;
         conditions.quorum = 80;
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Adopt new Mandates: Stewards can adopt new mandates into the organization",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Adopt_Mandates"),
+                targetMandate: m_Adopt_Mandates,
                 config: abi.encode(),
                 conditions: conditions
             })
@@ -518,13 +536,13 @@ contract ConvergenceLayer is DeploySetup {
         // Legal Interfacers: Pause Mandates
         mandateCount++;
         conditions.allowedRole = 3; // Legal Interfacers
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid));
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour);
         conditions.succeedAt = 66;
         conditions.quorum = 80;
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Pause Mandates: Legal Interfacers can pause mandates in the organization",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "PauseMandates"),
+                targetMandate: m_PauseMandates,
                 config: abi.encode(
                     indexFlows,
                     indexMandates
@@ -542,13 +560,13 @@ contract ConvergenceLayer is DeploySetup {
         // Stewards: Update URI
         mandateCount++;
         conditions.allowedRole = 2; // = Stewards
-        conditions.votingPeriod = minutesToBlocks(5, helperConfig.getBlocksPerHour(block.chainid)); // = 5 minutes / days
+        conditions.votingPeriod = minutesToBlocks(5, blocksPerHour); // = 5 minutes / days
         conditions.succeedAt = 66; // = 2/3 majority
         conditions.quorum = 66; // = 66% quorum
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Update URI: Set allowed token for Convergence Layer",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "BespokeAction_Simple"),
+                targetMandate: m_BespokeAction_Simple,
                 config: abi.encode(
                     address(0), // target address is its own powers contract
                     Powers.setUri.selector, // function selector to call
@@ -565,7 +583,7 @@ contract ConvergenceLayer is DeploySetup {
         constitution.push(
             PowersTypes.MandateInitData({
                 nameDescription: "Transfer tokens to treasury: Any tokens accidently sent to the Layer can be recovered by sending them to the treasury",
-                targetMandate: registry.getMandateAddress(MAJOR, MINOR, PATCH, "Safe_RecoverTokens"), // maybe functionality has to change slightly: have token to be transferred as input param. 
+                targetMandate: m_Safe_RecoverTokens, // maybe functionality has to change slightly: have token to be transferred as input param. 
                 config: abi.encode(
                     treasury, 
                     helperConfig.getSafeAllowanceModule(block.chainid) // allowance module address

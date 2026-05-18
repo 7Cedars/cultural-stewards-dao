@@ -31,9 +31,39 @@ abstract contract DeploySetup is DeployHelpers {
     string[] dynamicParams;
     uint16 mandateCount;
     address treasury;
-    address paymaster; 
+    address paymaster;
 
-    // The mandate version to be used. 
+    uint256 internal blocksPerHour; // to be set in setUp() of inheriting contracts.  
+
+    // Cached mandate addresses — populated per-layer via _initMandateAddresses().
+    address internal m_Adopt_Mandates;
+    address internal m_BespokeAction_Advanced;
+    address internal m_BespokeAction_OnReturnValue;
+    address internal m_BespokeAction_Simple;
+    address internal m_ElectionRegistry_CleanUpVoteMandate;
+    address internal m_ElectionRegistry_CreateVoteMandate;
+    address internal m_ElectionRegistry_Nominate;
+    address internal m_ElectionRegistry_Tally;
+    address internal m_ElectionRegistry_Vote;
+    address internal m_ExternalAction_Flexible;
+    address internal m_ExternalAction_OnReturnValue;
+    address internal m_ExternalAction_Simple;
+    address internal m_GovernedToken_GatedAccess;
+    address internal m_GovernedToken_MintEncodedToken;
+    address internal m_Nominate;
+    address internal m_PauseMandates;
+    address internal m_PeerSelect;
+    address internal m_PresetActions;
+    address internal m_PresetActions_OnOwnPowers;
+    address internal m_SafeAllowance_Action;
+    address internal m_SafeAllowance_Transfer;
+    address internal m_Safe_ExecTransaction;
+    address internal m_Safe_ExecTransaction_OnReturnValue;
+    address internal m_Safe_RecoverTokens;
+    address internal m_StatementOfIntent;
+    address internal m_ZKPassport_Check;
+
+    // The mandate version to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
     uint16 constant PATCH = 7;
