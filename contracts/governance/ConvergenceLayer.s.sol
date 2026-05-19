@@ -102,19 +102,20 @@ contract ConvergenceLayer is DeploySetup {
         //////////////////////////////////////////////////////////////////////
 
         // setup role labels // 
-        calldatas = new bytes[](11);
+        calldatas = new bytes[](12);
         calldatas[0] = abi.encodeWithSelector(IPowers.labelRole.selector, 0, "Ideas Layer", "");
         calldatas[1] = abi.encodeWithSelector(IPowers.labelRole.selector, type(uint256).max, "Public", ""); 
         calldatas[2] = abi.encodeWithSelector(IPowers.labelRole.selector, 1, "Attendee", ""); 
         calldatas[3] = abi.encodeWithSelector(IPowers.labelRole.selector, 2, "Steward", ""); 
         calldatas[4] = abi.encodeWithSelector(IPowers.labelRole.selector, 3, "Legal Interfacer", "");
         calldatas[5] = abi.encodeWithSelector(IPowers.labelRole.selector, 6, "Primary Layer", "");
-        calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, testAccount1);
-        calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, testAccount1);
-        calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, testAccount1);
-        calldatas[9] = abi.encodeWithSelector(IPowers.assignRole.selector, 6, primaryLayer); 
+        calldatas[6] = abi.encodeWithSelector(IPowers.assignRole.selector, 0, cedars);
+        calldatas[7] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, testAccount1);
+        calldatas[8] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, testAccount1);
+        calldatas[9] = abi.encodeWithSelector(IPowers.assignRole.selector, 3, testAccount1);
+        calldatas[10] = abi.encodeWithSelector(IPowers.assignRole.selector, 6, primaryLayer); 
         // £todo: treasury as itself. 
-        calldatas[10] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use. 
+        calldatas[11] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1); // revoke mandate 1 after use. 
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public.

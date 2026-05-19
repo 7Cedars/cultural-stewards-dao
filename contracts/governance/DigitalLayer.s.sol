@@ -144,12 +144,13 @@ contract DigitalLayer is DeploySetup {
         delete conditions;
 
         // SECOND SETUP //
-        calldatas = new bytes[](5);
+        calldatas = new bytes[](6);
         calldatas[0] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, cedars);
         calldatas[1] = abi.encodeWithSelector(IPowers.assignRole.selector, 1, hannah);
         calldatas[2] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, cedars);
         calldatas[3] = abi.encodeWithSelector(IPowers.assignRole.selector, 2, hannah);
-        calldatas[4] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
+        calldatas[4] = abi.encodeWithSelector(IPowers.assignRole.selector, 0, cedars);
+        calldatas[5] = abi.encodeWithSelector(IPowers.revokeMandate.selector, mandateCount + 1);
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = public.

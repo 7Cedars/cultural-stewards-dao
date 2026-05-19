@@ -326,7 +326,14 @@ convergence-layer-deploy :
 	@echo "Deploying convergence layer contracts..."
 	./governance/bash/deploy_convergence_layer.sh "" "" "" "" $(SEPOLIA_DEPLOY_ARGS)
 
+unpack-mandates : 
+	@echo "Unpacking mandates..."
+	./governance/bash/unpack_ideas_layers.sh "" "" "" $(SEPOLIA_DEPLOY_ARGS)
+
 # Verify Contracts
-# sepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0x05c0379565ef0ebb1bD21C0Ab463ca5CE5211D3A src/Powers.sol:Powers --watch
-optSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0x6f8c6ac58a467836D85548Bf2Fef473D5efcFeA4 src/helpers/TreasuryPools.sol:TreasuryPools --watch
+sepoliaVerifyContract : 
+	forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155111 --verifier etherscan 0xb1366186f693128383E77Bbd4fd0A8B3Aa22e841 src/Powers.sol:Powers --watch
+
+
+optSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0x6f8c6ac58a467836D85548Bf2Fef473D5efcFeA4 /home/teijehidde/Documents/7CedarsGit/projects/cultural-stewards-dao/contracts/lib/powers-monorepo/solidity/src/Powers.sol:Powers --watch
 arbSepoliaVerifyContract :; forge verify-contract --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 421614 --compiler-version 0.8.26 --num-of-optimizations 600 --verifier etherscan 0xb1fe867eE7919887EB381c4626bdbAe003969683 src/helpers/TreasuryPools.sol:TreasuryPools --watch 
