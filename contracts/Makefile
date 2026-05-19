@@ -122,16 +122,14 @@ install-deps:
 	@echo "Installing dependencies..."
 	forge install foundry-rs/forge-std --no-git || exit 1
 	forge install publius-projects/powers-monorepo --no-git || exit 1
-	forge install openzeppelin/openzeppelin-contracts@v5.0.2  --no-git || exit 1
+	forge install openzeppelin/openzeppelin-contracts@v5.6.1  --no-git || exit 1
 	forge install smartcontractkit/chainlink-evm@contracts-v1.4.0  --no-git || exit 1
 	forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0  --no-git || exit 1
 	forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
 	forge install safe-fndn/safe-modules --no-git || exit 1
-	forge install zkpassport/circuits --no-git || exit 1
-	forge install zkpassport/zkpassport-packages --no-git || exit 1
+	forge install zkpassport/circuits@24537062043212a73f70066f2e04bc0abe97ae0e --no-git || exit 1
 	forge install eth-infinitism/account-abstraction@v0.7.0 --no-git || exit 1
 	@echo "Dependencies installed without git metadata."
-	
 
 reset-deps:
 	@echo "Resetting dependencies..."
@@ -139,16 +137,20 @@ reset-deps:
 	@mkdir -p lib
 	@forge install foundry-rs/forge-std --no-git || exit 1
 	@forge install publius-projects/powers-monorepo --no-git || exit 1
-	@forge install openzeppelin/openzeppelin-contracts@v5.0.2 --no-git || exit 1
-	@forge install smartcontractkit/chainlink-evm@contracts-v1.4.0 --no-git || exit 1
-	@forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0 --no-git || exit 1
+	@forge install openzeppelin/openzeppelin-contracts@v5.6.1  --no-git || exit 1
+	@forge install smartcontractkit/chainlink-evm@contracts-v1.4.0  --no-git || exit 1
+	@forge install smartcontractkit/chainlink-ccip@contracts-ccip-v1.6.0  --no-git || exit 1
 	@forge install safe-fndn/safe-smart-account@v1.4.1 --no-git || exit 1
 	@forge install safe-fndn/safe-modules --no-git || exit 1
-	@forge install zkpassport/circuits --no-git || exit 1
-	@forge install zkpassport/zkpassport-packages --no-git || exit 1
+	@forge install zkpassport/circuits@24537062043212a73f70066f2e04bc0abe97ae0e --no-git || exit 1
 	@forge install eth-infinitism/account-abstraction@v0.7.0 --no-git || exit 1
 	@echo "Dependencies reset complete. All libs installed without git metadata."
-	
+
+circuits-reset: 
+	@echo "Resetting circuits dependency..."
+	@rm -rf lib/circuits/
+	@forge install zkpassport/circuits@24537062043212a73f70066f2e04bc0abe97ae0e --no-git || exit 1
+	@echo "Circuits dependency reset complete."
 
 # Documentation
 doc:
@@ -298,7 +300,9 @@ update-builds:
 
 # Deployment arguments for different networks
 ANVIL_DEPLOY_ARGS := --rpc-url http://localhost:8545 --private-key $(DEFAULT_ANVIL_KEY_0) --broadcast --ffi -vv 
-SEPOLIA_DEPLOY_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 11155111 --ffi -vv
+
+SEPOLIA_DEPLOY_ARGS := --rpc-url $(SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast -vv
+
 ARB_SEPOLIA_DEPLOY_ARGS := --rpc-url $(ARB_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --verifier etherscan --chain 421614 --verify --ffi -vv 
 OPT_SEPOLIA_DEPLOY_ARGS := --rpc-url $(OPT_SEPOLIA_RPC_URL) --account dev_3 --sender ${DEV2_ADDRESS} --broadcast --etherscan-api-key $(ETHERSCAN_API_KEY) --chain 11155420 --ffi -vv
 
@@ -311,12 +315,12 @@ fork-anvil :
 	anvil --fork-url $(OPT_SEPOLIA_RPC_URL) --block-time 1 --chain-id 31337   
 
 governance-deploy : 
-	@echo "Deploying example contracts..."
+	@echo "Deploying Cultural Stewardship..."
 	forge script governance/Deploy.s.sol:Deploy $(SEPOLIA_DEPLOY_ARGS)
 
 ideas-layer-deploy : 
 	@echo "Deploying ideas layer contracts..."
-	./governance/bash/deploy_ideas_layers.sh "" "" "" $(SEPOLIA_DEPLOY_ARGS)
+	./governance/bash/deploy_ideas_layers.sh "" "" "" "" $(SEPOLIA_DEPLOY_ARGS)
 
 convergence-layer-deploy : 
 	@echo "Deploying convergence layer contracts..."
