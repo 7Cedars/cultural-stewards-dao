@@ -166,7 +166,7 @@ contract IdeasLayer is DeploySetup {
         // public: apply for Participant
         inputParams = new string[](2);
         inputParams[0] = "address Applicant";
-        inputParams[1] = "string ApplicationURI";
+        inputParams[1] = "string Reason";
 
         mandateCount++;
         conditions.allowedRole = type(uint256).max; // = Public
