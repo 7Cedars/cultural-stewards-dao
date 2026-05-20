@@ -381,7 +381,7 @@ contract IdeasLayer is DeploySetup {
         mandateIds[3] = mandateCount + 4;
 
         flows.push(PowersTypes.Flow({
-            nameDescription: "Propose Legal Interfacer for Convergence Layer: Candidates prove eligibility via ZK-Passport (age >= 18, GBR passport). The Primary Layer can veto within a 5-minute window. After the veto window passes without a veto, the nominee is automatically assigned the Legal Interfacer role on the target Convergence Layer. All mandates share calldata format: abi.encode(address PowersTarget, uint16 MandateIdTarget, address AccountToCheck).",
+            nameDescription: "Propose Legal Interfacer for Convergence Layer: Candidates prove eligibility via ZK-Passport (age >= 18, GBR passport). The Primary Layer can veto within a 5-minute window and stewards have a final vote.",
             mandateIds: mandateIds
         }));
 
@@ -462,22 +462,20 @@ contract IdeasLayer is DeploySetup {
         );
         delete conditions;
 
-        // Public: Execute Legal Interfacer Assignment via ExternalAction_OnReturnValue.
-        // Caller supplies (PowersTarget, MandateIdTarget, AccountToCheck) — matching the ZKP mandate calldata.
-        // The ZKP country check return value (abi.encode(candidateAddress)) is forwarded to the CL prepended
-        // with role 3, so the CL receives abi.encode(uint256(3), candidateAddress) as its mandate calldata.
-        // NB: the CL's Ideas Layer role (role 0) must be assigned to the calling Ideas Layer instance at CL setup.
         {
             string[] memory legalInterfacerExtraParams = new string[](1);
             legalInterfacerExtraParams[0] = "address AccountToCheck";
             mandateCount++;
-            conditions.allowedRole = type(uint256).max; // = public (anyone can trigger after timelock)
+            conditions.allowedRole = 2; // = Stewards
             conditions.needFulfilled = mandateCount - 2; // = ZKP country check (mandate B)
             conditions.needNotFulfilled = mandateCount - 1; // = PL veto mandate (mandate C)
-            conditions.timelock = minutesToBlocks(5, blocksPerHour); // 5-min veto window
+            conditions.quorum = 51; // simple majority
+            conditions.succeedAt = 51; // simple majority
+            conditions.votingPeriod = minutesToBlocks(4, blocksPerHour); // 10-minute voting window for Stewards after PL veto window closes
+            conditions.timelock = minutesToBlocks(7, blocksPerHour); // 5-min veto window
             constitution.push(
                 PowersTypes.MandateInitData({
-                    nameDescription: "Execute Legal Interfacer Assignment: After the 5-minute veto window passes without a Primary Layer veto, calls the target Convergence Layer (PowersTarget) to assign the Legal Interfacer role.",
+                    nameDescription: "Execute Legal Interfacer Assignment: Stewards have a final vote. If successful, calls the target Convergence Layer (PowersTarget) to assign the Legal Interfacer role.",
                     targetMandate: m_ExternalAction_OnReturnValue,
                     config: abi.encode(
                         abi.encode(uint256(3)), // paramsBefore: role 3 = Legal Interfacer, prepended to ZKP return value
