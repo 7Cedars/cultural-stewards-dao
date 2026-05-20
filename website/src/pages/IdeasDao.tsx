@@ -12,13 +12,13 @@ import ideasLayerTending from "@/assets/ideas-layer-tending.png";
 import { ideasLayers } from "@/data/ideasLayers";
 
 const signupIndex: Record<string, number> = {
-  Telling: 1,
-  Listening: 2,
-  Imagining: 3,
-  Seeing: 4,
-  Remembering: 5,
-  Tending: 6,
-  Making: 7,
+  Telling: 0,
+  Listening: 1,
+  Imagining: 2,
+  Seeing: 3,
+  Remembering: 4,
+  Tending: 5,
+  Making: 6,
 };
 
 const IdeasDao = () => {
