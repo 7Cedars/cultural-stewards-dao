@@ -1,6 +1,6 @@
 {
   "icon": "",
-  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeih77m4lyvnjtlfjhdxlallszwylnfygjlhvolursvd4kwlyq4qceu/primaryLayer.png",
+  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidicp7shq7ryief2qxarezz6bpnrnlim4hcqeqfp2jlvfwobb2ppa/primaryLayer.png",
   "description": 
     "Cultural Stewards is a multi-layered ecosystem designed to foster interplays between ideational concepts, digital manifestations and in-person experiences. The primary layer oversees the entire ecosystem, while the Ideas Layer manages concepts and digital interfaces, and the Convergences Layers handles temporary sessions that manifest as online or in-person events.",
   "website": "https://enterhere.io",
@@ -22,35 +22,35 @@
   "childContracts": [ 
     {
       "title": "Digital Layer",
-      "address": "0x6202B40331067aFd55AD6Ca19a5740C7ae389F8D"
+      "address": "0x8Ed502A5f288040b9A47E649B8C5F1ACe67847Fb"
     },
     {
       "title": "Seeing",
-      "address": "0x7B77d4318B817Aa587fC22a2268D5e172Ec916bB"
+      "address": "0x38D9dC30A0fA5b933E70Ac23E3226D12BC4543b8"
     },
     {
       "title": "Making",
-      "address": "0xFAeA7205291608086E0D2452DC98e0E16Bae416D"
+      "address": "0xA1795c5066c821C8c111151f62C87F59aC72FCF3"
     },
     {
       "title": "Listening",
-      "address": "0x6202B40331067aFd55AD6Ca19a5740C7ae389F8D"
+      "address": "0x6B81b7F6AfDCc69574763c37609140592eabf958"
     },
     {
       "title": "Telling",
-      "address": "0x7B77d4318B817Aa587fC22a2268D5e172Ec916bB"
+      "address": "0x5603DC7D973a9c4e6d664924eAfE71F1329b6C3c"
     },
     {
       "title": "Remembering",
-      "address": "0xFAeA7205291608086E0D2452DC98e0E16Bae416D"
+      "address": "0x545c54e85BD8Bfb918cd10ED2f5A5efc480e1725"
     },
     {
       "title": "Imagining",
-      "address": "0x6202B40331067aFd55AD6Ca19a5740C7ae389F8D"
+      "address": "0x599dFB6e2314dCC02C80e351738a0dCBF4b714f2"
     },
     {
       "title": "Tending",
-      "address": "0x7B77d4318B817Aa587fC22a2268D5e172Ec916bB"
+      "address": "0x11a68Ec4A23b7dD87B97A44dD4545D29E4277746"
     }
   ],
   "attributes": [ ]

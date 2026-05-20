@@ -4,7 +4,6 @@ pragma solidity ^0.8.26;
 import { console2 } from "forge-std/console2.sol";
 import { Powers } from "@lib/powers-monorepo/solidity/src/Powers.sol";
 import { IPowers } from "@lib/powers-monorepo/solidity/src/interfaces/IPowers.sol";
-import { IMandate } from "@lib/powers-monorepo/solidity/src/interfaces/IMandate.sol";
 import { ActionHelpers } from "./ActionHelpers.s.sol";
 
 // This script contains a set of modular interactions with the primary layer. They  can be used for testing or setting up up an organisation after deployment.
@@ -39,19 +38,19 @@ contract Initialise is ActionHelpers {
         delete mandateSlots;
         delete actionIds;
 
-        // step 1: identify mandates to run by iterating all mandate slots and matching by name.
-        uint16 counter = Powers(payable(powers)).mandateCounter();
+        // step 1: load mandate cache once for this org, then find reform packages from the
+        // cache without per-slot RPC calls. runSetupMandate (called after this) reuses the
+        // same cache, so the mandate scan happens only once per org.
+        _loadMandateCache(Powers(payable(powers)));
+        uint16 counter = _mandateCounterCache[address(powers)];
         for (uint16 i = 1; i < counter; i++) {
-            (address mandateAddr,,) = Powers(payable(powers)).getAdoptedMandate(i);
-            string memory name = IMandate(mandateAddr).getNameDescription(powers, i);
-            if (keccak256(abi.encodePacked(name)) == keccak256(abi.encodePacked("Reform Package ", vm.toString(i)))) {
-                mandateSlots.push(i);
-            }
+            uint16 id = _mandateCache[address(powers)][keccak256(abi.encodePacked("Reform Package ", vm.toString(i)))];
+            if (id != 0) mandateSlots.push(id);
         }
-        
+
         console2.log("Unpacking reform packages for layer: ", Powers(payable(powers)).name());
         console2.log("Found ", mandateSlots.length, " reform packages to unpack.");
-        console2.log("total number of mandates in the layer: ", Powers(payable(powers)).mandateCounter()); 
+        console2.log("total number of mandates in the layer: ", counter);
 
         // public mandates, so no need to check permissions.
         for (uint i = 0; i < mandateSlots.length; i++) {
@@ -154,11 +153,58 @@ contract Initialise is ActionHelpers {
             deployedIdeasLayer[i] = Powers(payable(primaryLayer)).getRoleHolderAtIndex(4, i);
             console2.log("Deployed Ideas Layer: ", names[i], ": ", deployedIdeasLayer[i]);
             unpackReformPackages(deployedIdeasLayer[i], nonce, privateKeys); // unpack reform packages at the new ideas layer.
-            runSetupMandate(deployedIdeasLayer[i], nonce, privateKeys); // run setup mandate at the new ideas layer.
+        }
+        for (uint i = 0; i < names.length; i++) {
+            runSetupMandate(deployedIdeasLayer[i], nonce, privateKeys); // run setup mandate at the new ideas layer to assign roles and unpack reform packages.
         }
 
         console2.log("Deployed ", names.length, " Ideas Layers Successfully!");
         return deployedIdeasLayer;
+    }
+
+    function updateUriIdeasLayer1(address[] memory ideasLayers, string memory uri, uint256 nonce, uint256[] memory privateKeys) public {
+        // step 0: reset state variables.
+        delete mandateSlots;
+        delete actionIds;
+
+        for (uint i = 0; i < ideasLayers.length; i++) {
+            // step 1: identify mandate to run.
+            uint16 updateUriMandateId = findMandateIdInOrg("Update URI: Set allowed token for Convergence Layer", Powers(payable(ideasLayers[i])));
+
+            // step 2: propose URI update — "Update URI" requires role 2 (Stewards) and has a voting period.
+            vm.startBroadcast(getPrivateKeyRoleHolder(ideasLayers[i], 2, 0, privateKeys));
+            uint256 actionId = IPowers(ideasLayers[i]).propose(updateUriMandateId, abi.encode(uri), nonce + i, "Proposing URI update for Ideas Layer");
+            vm.stopBroadcast();
+
+            // step 3: vote on proposal.
+            (roleCount, againstVote, forVote, abstainVote) = voteOnProposal(
+                ideasLayers[i],
+                updateUriMandateId,
+                actionId,
+                privateKeys,
+                nonce + i,
+                100
+            );
+            console2.log("Ideas Layer ", ideasLayers[i], " votes for URI update: ", forVote);
+        }
+    }
+
+    function updateUriIdeasLayer2(address[] memory ideasLayers, string memory uri, uint256 nonce, uint256[] memory privateKeys) public {
+        // step 0: reset state variables.
+        delete mandateSlots;
+        delete actionIds;
+
+        for (uint i = 0; i < ideasLayers.length; i++) {
+            // step 1: identify mandate to run.
+            uint16 updateUriMandateId = findMandateIdInOrg("Update URI: Set allowed token for Convergence Layer", Powers(payable(ideasLayers[i])));
+
+            // step 2: execute URI update — "Update URI" requires role 2 (Stewards).
+            vm.startBroadcast(getPrivateKeyRoleHolder(ideasLayers[i], 2, 0, privateKeys));
+            IPowers(ideasLayers[i]).request(updateUriMandateId, abi.encode(uri), nonce + i, "Executing URI update for Ideas Layer");
+            vm.stopBroadcast();
+
+            console2.log("URI updated to ", uri, " for Ideas Layer: ", ideasLayers[i]);
+        }
     }
 
     function deployConvergenceLayer1(address ideasLayer, uint256 nonce, uint256[] memory privateKeys) public {

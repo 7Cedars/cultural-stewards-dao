@@ -18,8 +18,8 @@ abstract contract DeploySetup is DeployHelpers {
     Configurations helperConfig = new Configurations();
     MandateRegistry registry = MandateRegistry(0x97b66F08Eb857e27A24492D338d3DC484DF63896); 
 
-    address cedars = 0x328735d26e5Ada93610F0006c32abE2278c46211;
-    address hannah = 0xEA223f81D7E74321370a77f1e44067bE8738B627;
+    address cedars = 0x95e51Ce331e9F81917d729C5b1F9127ca1138a01; // privy AA. 
+    address hannah = 0xc9ce1DC547C42F66464f5a7f0E3cd60EBf1C5Bd2;
     string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeifteuvxskmzqraitv3ho2gd7k5gbdjdt7uptxwqnojwituu5llcfy/";
     
     uint256 constitutionLength; 
