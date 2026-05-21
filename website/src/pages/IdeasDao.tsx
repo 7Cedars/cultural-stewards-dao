@@ -11,6 +11,16 @@ import ideasLayerRemembering from "@/assets/ideas-layer-remembering.png";
 import ideasLayerTending from "@/assets/ideas-layer-tending.png";
 import { ideasLayers } from "@/data/ideasLayers";
 
+const signupIndex: Record<string, number> = {
+  Telling: 0,
+  Listening: 1,
+  Imagining: 2,
+  Seeing: 3,
+  Remembering: 4,
+  Tending: 5,
+  Making: 6,
+};
+
 const IdeasDao = () => {
   return (
     <Layout>
@@ -35,7 +45,7 @@ const IdeasDao = () => {
             {ideasLayers.map(({ n, title, actions, participants, uriDescription }) => (
               <a
                 key={n}
-                href="https://powers-utils.vercel.app/CS-signup"
+                href={`https://powers-utils.vercel.app/CS-signup?index=${signupIndex[title] ?? ""}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="border border-foreground/15 p-4 space-y-3 block hover:border-foreground/40 transition-all bg-background"

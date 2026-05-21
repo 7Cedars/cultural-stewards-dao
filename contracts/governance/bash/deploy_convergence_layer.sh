@@ -30,35 +30,71 @@ if [ -z "$IDEAS_LAYER" ] || [ -z "$PRIMARY_LAYER" ] || [ -z "$NONCE" ] || [ -z "
 fi
 
 # 6 minutes in seconds
-INTERVAL=360 
+INTERVAL_6MIN=360 
 
 echo "=========================================================="
 echo "Starting Timed Convergence Layer Deployment Process"
 echo "Ideas Layer: $IDEAS_LAYER"
 echo "Primary Layer: $PRIMARY_LAYER"
 echo "Nonce: $NONCE"
-echo "Interval: 6 minutes ($INTERVAL seconds) between steps"
+echo "Intervals: 6 minutes"
 echo "=========================================================="
 echo ""
 
-echo "[1/2] Executing deployConvergenceLayer1..."
+echo "[1/5] Executing deployConvergenceLayer1..."
 forge script governance/actions/Initialise.s.sol:Initialise \
-    --sig "deployConvergenceLayer1(address,address,uint256,uint256[])" \
-    "$IDEAS_LAYER" "$PRIMARY_LAYER" "$NONCE" "$PRIVATE_KEYS" \
+    --sig "deployConvergenceLayer1(address,uint256,uint256[])" \
+    "$IDEAS_LAYER" "$NONCE" "$PRIVATE_KEYS" \
     $EXTRA_ARGS
 echo "deployConvergenceLayer1 completed successfully."
 
 echo ""
-echo "Waiting for 6 minutes ($INTERVAL seconds) before executing the next step..."
-sleep $INTERVAL
+echo "Waiting for 6 minutes ($INTERVAL_6MIN seconds) before executing the next step..."
+sleep $INTERVAL_6MIN
 echo ""
 
-echo "[2/2] Executing deployConvergenceLayer2..."
+echo "[2/5] Executing deployConvergenceLayer2..."
 forge script governance/actions/Initialise.s.sol:Initialise \
-    --sig "deployConvergenceLayer2(address,address,uint256)" \
-    "$IDEAS_LAYER" "$PRIMARY_LAYER" "$NONCE" \
+    --sig "deployConvergenceLayer2(address,uint256,uint256[])" \
+    "$IDEAS_LAYER" "$NONCE" "$PRIVATE_KEYS" \
     $EXTRA_ARGS
 echo "deployConvergenceLayer2 completed successfully."
+
+echo ""
+echo "Waiting for 8 minutes ($INTERVAL_6MIN seconds) before executing the next step..."
+sleep $INTERVAL_6MIN
+echo ""
+
+echo "[3/5] Executing deployConvergenceLayer3..."
+forge script governance/actions/Initialise.s.sol:Initialise \
+    --sig "deployConvergenceLayer3(address,address,uint256,uint256[])" \
+    "$PRIMARY_LAYER" "$IDEAS_LAYER" "$NONCE" "$PRIVATE_KEYS" \
+    $EXTRA_ARGS
+echo "deployConvergenceLayer3 completed successfully."
+
+echo ""
+echo "Waiting for 8 minutes ($INTERVAL_6MIN seconds) before executing the next step..."
+sleep $INTERVAL_6MIN
+echo ""
+
+echo "[4/5] Executing deployConvergenceLayer4..."
+forge script governance/actions/Initialise.s.sol:Initialise \
+    --sig "deployConvergenceLayer4(address,uint256,uint256[])" \
+    "$PRIMARY_LAYER" "$NONCE" "$PRIVATE_KEYS" \
+    $EXTRA_ARGS
+echo "deployConvergenceLayer4 completed successfully."
+
+echo ""
+echo "Waiting for 8 minutes ($INTERVAL_6MIN seconds) before executing the next step..."
+sleep $INTERVAL_6MIN
+echo ""
+
+echo "[5/5] Executing deployConvergenceLayer5..."
+forge script governance/actions/Initialise.s.sol:Initialise \
+    --sig "deployConvergenceLayer5(address,uint256,uint256[])" \
+    "$PRIMARY_LAYER" "$NONCE" "$PRIVATE_KEYS" \
+    $EXTRA_ARGS
+echo "deployConvergenceLayer5 completed successfully."
 
 echo ""
 echo "=========================================================="

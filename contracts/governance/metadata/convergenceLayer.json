@@ -1,8 +1,8 @@
 {
   "icon": "",
-  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidicp7shq7ryief2qxarezz6bpnrnlim4hcqeqfp2jlvfwobb2ppa/digitalLayer.png",
+  "banner": "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeidicp7shq7ryief2qxarezz6bpnrnlim4hcqeqfp2jlvfwobb2ppa/physicalLayer.png",
   "description": 
-    "Manages code repositories, commits, and digital representation of the organisation and its layers. The Primary Layer holds some veto powers over this Layer.",
+    "Manages the convergences of Ideas and digital layers around temporary sessions that manifest as online or in-person events. They are initiated by an Ideas Layer and need to be approved by the primary layer. They can request an allowance from the primary layer to execute their events.",
   "website": "https://enterhere.io",
   "codeOfConduct": "https://github.com/publius-projects/powers-monorepo/blob/main/CODE_OF_CONDUCT.md", 
   "disputeResolution": "",

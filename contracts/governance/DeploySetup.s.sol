@@ -18,9 +18,9 @@ abstract contract DeploySetup is DeployHelpers {
     Configurations helperConfig = new Configurations();
     MandateRegistry registry = MandateRegistry(0x97b66F08Eb857e27A24492D338d3DC484DF63896); 
 
-    address cedars = 0x328735d26e5Ada93610F0006c32abE2278c46211;
-    address hannah = 0xEA223f81D7E74321370a77f1e44067bE8738B627;
-    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeibnyrgzok373d4zveasq3jppz62jievfih7yyaiqdgmucwcznhqfa/";
+    address cedars = 0x95e51Ce331e9F81917d729C5b1F9127ca1138a01; // privy AA. 
+    address hannah = 0xc9ce1DC547C42F66464f5a7f0E3cd60EBf1C5Bd2;
+    string baseURI = "https://aqua-famous-sailfish-288.mypinata.cloud/ipfs/bafybeifteuvxskmzqraitv3ho2gd7k5gbdjdt7uptxwqnojwituu5llcfy/";
     
     uint256 constitutionLength; 
     address[] targets;
@@ -31,12 +31,42 @@ abstract contract DeploySetup is DeployHelpers {
     string[] dynamicParams;
     uint16 mandateCount;
     address treasury;
-    address paymaster; 
+    address paymaster;
 
-    // The mandate version to be used. 
+    uint256 internal blocksPerHour; // to be set in setUp() of inheriting contracts.  
+
+    // Cached mandate addresses — populated per-layer via _initMandateAddresses().
+    address internal m_Adopt_Mandates;
+    address internal m_BespokeAction_Advanced;
+    address internal m_BespokeAction_OnReturnValue;
+    address internal m_BespokeAction_Simple;
+    address internal m_ElectionRegistry_CleanUpVoteMandate;
+    address internal m_ElectionRegistry_CreateVoteMandate;
+    address internal m_ElectionRegistry_Nominate;
+    address internal m_ElectionRegistry_Tally;
+    address internal m_ElectionRegistry_Vote;
+    address internal m_ExternalAction_Flexible;
+    address internal m_ExternalAction_OnReturnValue;
+    address internal m_ExternalAction_Simple;
+    address internal m_GovernedToken_GatedAccess;
+    address internal m_GovernedToken_MintEncodedToken;
+    address internal m_Nominate;
+    address internal m_PauseMandates;
+    address internal m_PeerSelect;
+    address internal m_PresetActions;
+    address internal m_PresetActions_OnOwnPowers;
+    address internal m_SafeAllowance_Action;
+    address internal m_SafeAllowance_Transfer;
+    address internal m_Safe_ExecTransaction;
+    address internal m_Safe_ExecTransaction_OnReturnValue;
+    address internal m_Safe_RecoverTokens;
+    address internal m_StatementOfIntent;
+    address internal m_ZKPassport_Check;
+
+    // The mandate version to be used.
     uint16 constant MAJOR = 0;
     uint16 constant MINOR = 1;
-    uint16 constant PATCH = 5;
+    uint16 constant PATCH = 7;
 
     uint16 constant PACKAGE_SIZE = 7;  
 }

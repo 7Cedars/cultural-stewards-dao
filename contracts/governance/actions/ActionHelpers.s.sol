@@ -11,33 +11,51 @@ import { IPowers } from "@src/interfaces/IPowers.sol";
 import { IMandate } from "@src/interfaces/IMandate.sol";
 import { ElectionRegistry } from "@src/helpers/ElectionRegistry.sol";
 
-contract ActionHelpers is Script { 
+contract ActionHelpers is Script {
     Configurations helperConfig = new Configurations();
+
+    // mandate ID cache: org => descriptionHash => mandateId (0 = not found/slot unused)
+    mapping(address => mapping(bytes32 => uint16)) internal _mandateCache;
+    mapping(address => bool) private _mandateCacheLoaded;
+    mapping(address => uint16) internal _mandateCounterCache;
+    // role holder key cache: keccak256(powers, roleId, index) => privateKey
+    mapping(bytes32 => uint256) private _roleHolderKeyCache;
 
     //////////////////////////////////////////////////////////////////////////////////
     //                             Helper Functions                                 //
-    //////////////////////////////////////////////////////////////////////////////////  
-    // NB: the name + description needs to exactly match the name + description of the mandate in order to find the correct mandate ID.  
-    function findMandateIdInOrg(string memory description, Powers org) public view returns (uint16) {
+    //////////////////////////////////////////////////////////////////////////////////
+
+    function _loadMandateCache(Powers org) internal {
+        if (_mandateCacheLoaded[address(org)]) return;
         uint16 counter = org.mandateCounter();
+        _mandateCounterCache[address(org)] = counter;
         for (uint16 i = 1; i < counter; i++) {
             (address mandateAddress, , ) = org.getAdoptedMandate(i);
             string memory mandateDesc = IMandate(mandateAddress).getNameDescription(address(org), i);
-            if (keccak256(abi.encodePacked(mandateDesc)) == keccak256(abi.encodePacked(description))) {
-                return i;
-            }
+            _mandateCache[address(org)][keccak256(abi.encodePacked(mandateDesc))] = i;
         }
-        revert(string.concat("Mandate not found: ", description));
+        _mandateCacheLoaded[address(org)] = true;
+    }
+
+    // NB: the name + description needs to exactly match the name + description of the mandate in order to find the correct mandate ID.
+    function findMandateIdInOrg(string memory description, Powers org) public returns (uint16) {
+        _loadMandateCache(org);
+        uint16 id = _mandateCache[address(org)][keccak256(abi.encodePacked(description))];
+        if (id == 0) revert(string.concat("Mandate not found: ", description));
+        return id;
     }
 
     function calculateActionId(uint16 mandateId, bytes memory mandateCalldata, uint256 nonce) public pure returns (uint256) {
         return uint256(keccak256(abi.encode(mandateId, mandateCalldata, nonce)));
     }
 
-    function getPrivateKeyRoleHolder(address powers, uint256 roleId, uint256 index, uint256[] memory privateKeys) public view returns (uint256) {
+    function getPrivateKeyRoleHolder(address powers, uint256 roleId, uint256 index, uint256[] memory privateKeys) public returns (uint256) {
+        bytes32 cacheKey = keccak256(abi.encode(powers, roleId, index));
+        if (_roleHolderKeyCache[cacheKey] != 0) return _roleHolderKeyCache[cacheKey];
+        address roleHolder = Powers(payable(powers)).getRoleHolderAtIndex(roleId, index);
         for (uint256 i = 0; i < privateKeys.length; i++) {
-            address account = vm.addr(privateKeys[i]);
-            if (Powers(payable(powers)).getRoleHolderAtIndex(roleId, index) == account) {
+            if (vm.addr(privateKeys[i]) == roleHolder) {
+                _roleHolderKeyCache[cacheKey] = privateKeys[i];
                 return privateKeys[i];
             }
         }

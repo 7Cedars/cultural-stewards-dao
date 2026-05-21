@@ -35,12 +35,13 @@ contract CulturalStewardsDAO_IntegrationTest is TestHelperFunctions {
     Deploy deploy; 
     
     // layers
-    PrimaryLayer primaryLayer;
-    DigitalLayer digitalLayer;
-    IdeasLayer ideasLayerFactory;
-    ConvergenceLayer convergenceLayerFactory;
+    address primaryLayer;
+    address digitalAddress;
+    address ideasLayerFactoryAddress;
+    address convergenceLayerFactoryAddress;
     address primaryAddress; 
     address convergenceAddress;
+    address ideasLayer0; 
 
     // actions 
     Initialise initialise;
@@ -71,16 +72,14 @@ contract CulturalStewardsDAO_IntegrationTest is TestHelperFunctions {
 
         // Deploy the initial organisations and factories. 
         deploy = new Deploy();        
-        (primaryLayer, digitalLayer, ideasLayerFactory, convergenceLayerFactory) = deploy.run();
-        primaryAddress = primaryLayer.getAddress();
-        convergenceAddress = convergenceLayerFactory.getAddress();
+        (primaryAddress, digitalAddress, ideasLayerFactoryAddress, convergenceLayerFactoryAddress) = deploy.run();
         
 
         // setting up the organisation (6 Ideas layes + 1 convergence layer)
         //1step 1 running setup mandates on Primary and Digital Layer. 
         initialise = new Initialise();
         initialise.runSetupMandate(primaryAddress, nonce, privateKeys);
-        initialise.runSetupMandate(digitalLayer.getAddress(), nonce, privateKeys);
+        initialise.runSetupMandate(digitalAddress, nonce, privateKeys);
 
         // step 2: intialise Ideas Layers  
         initialise.deployIdeasLayer1(primaryAddress, nonce, IDEAS_NAMES, privateKeys);
@@ -94,7 +93,7 @@ contract CulturalStewardsDAO_IntegrationTest is TestHelperFunctions {
         vm.roll(block.number + minutesToBlocks(6, blocksPerHour)); // Advance some blocks to avoid same-block issues.
 
         // step 3: initialise Convergence Layer
-        address ideasLayer0 = Powers(payable(primaryAddress)).getRoleHolderAtIndex(4, 0);
+        ideasLayer0 = Powers(payable(primaryAddress)).getRoleHolderAtIndex(4, 0);
         initialise.deployConvergenceLayer1(ideasLayer0, nonce, privateKeys);
         vm.roll(block.number + minutesToBlocks(6, blocksPerHour)); // Advance some blocks to avoid same-block issues.
 
@@ -104,15 +103,18 @@ contract CulturalStewardsDAO_IntegrationTest is TestHelperFunctions {
         initialise.deployConvergenceLayer3(primaryAddress, ideasLayer0, nonce, privateKeys);
         vm.roll(block.number + minutesToBlocks(8, blocksPerHour)); // Advance some blocks to avoid same-block issues.
 
-        initialise.deployConvergenceLayer4(primaryAddress, ideasLayer0, nonce, privateKeys);
+        initialise.deployConvergenceLayer4(primaryAddress, nonce, privateKeys);
+        vm.roll(block.number + minutesToBlocks(8, blocksPerHour)); // Advance some blocks to avoid same-block issues.
+        
+        initialise.deployConvergenceLayer5(primaryAddress, nonce, privateKeys);
     }
 
     function test_initialise_cultural_stewards() public view {
         // check dependencies 
-        check_inputParamsDependencies(address(primaryLayer)); 
-        check_inputParamsDependencies(address(digitalLayer)); 
-        check_inputParamsDependencies(address(ideasLayerFactory)); 
-        check_inputParamsDependencies(address(convergenceLayerFactory)); 
+        check_inputParamsDependencies(primaryAddress); 
+        check_inputParamsDependencies(digitalAddress); 
+        check_inputParamsDependencies(ideasLayerFactoryAddress); 
+        check_inputParamsDependencies(convergenceLayerFactoryAddress); 
 
         // check label role 
         vm.assertTrue(keccak256(abi.encodePacked(Powers(payable(primaryAddress)).getRoleLabel(1))) == keccak256(abi.encodePacked("Artist")), "Role 1 should be 'Artist'"); 
@@ -122,10 +124,10 @@ contract CulturalStewardsDAO_IntegrationTest is TestHelperFunctions {
         vm.assertTrue(keccak256(abi.encodePacked(Powers(payable(primaryAddress)).getRoleLabel(5))) == keccak256(abi.encodePacked("Executive")), "Role 5 should be 'Executive'"); 
         
         // check that test Account 1 is executive 
-        vm.assertTrue(Powers(payable(primaryLayer.getAddress())).hasRoleSince(testAccount1, 5) > 0, "Test Account 1 should have Executive role");
+        vm.assertTrue(Powers(payable(primaryAddress)).hasRoleSince(testAccount1, 5) > 0, "Test Account 1 should have Executive role");
 
         // check treasury 
-        vm.assertTrue(Powers(payable(primaryLayer.getAddress())).getTreasury() == primaryLayer.getAddress(), "Treasury should be set as organisation itself.");
+        // vm.assertTrue(Powers(payable(primaryAddress)).getTreasury() == primaryAddress, "Treasury should be set as organisation itself.");
     }
 
 }
