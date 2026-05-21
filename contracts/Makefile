@@ -321,6 +321,10 @@ ideas-layer-deploy :
 	@echo "Deploying ideas layer contracts..."
 	./governance/bash/deploy_ideas_layers.sh "" "" "" "" $(SEPOLIA_DEPLOY_ARGS)
 
+ideas-layer-setup : 
+	@echo "Setting up ideas layer contracts..."
+	./governance/bash/setup_ideas_layers.sh "" "" "" "" $(SEPOLIA_DEPLOY_ARGS)
+
 convergence-layer-deploy : 
 	@echo "Deploying convergence layer contracts..."
 	./governance/bash/deploy_convergence_layer.sh "" "" "" "" $(SEPOLIA_DEPLOY_ARGS)

@@ -29,8 +29,8 @@ if [ -z "$PRIMARY_LAYER" ] || [ -z "$NONCE" ] || [ -z "$IDEAS_NAMES" ] || [ -z "
     exit 1
 fi
 
-# 6 minutes in seconds
-INTERVAL=360 
+# 8 minutes in seconds
+INTERVAL=480 
 
 countdown() {
     local secs=$1
@@ -47,38 +47,38 @@ echo "Starting Timed Ideas Layer Deployment Process"
 echo "Primary Layer: $PRIMARY_LAYER"
 echo "Nonce: $NONCE"
 echo "Ideas Names: $IDEAS_NAMES"
-echo "Interval: 6 minutes ($INTERVAL seconds) between steps"
+echo "Interval: 8 minutes ($INTERVAL seconds) between steps"
 echo "=========================================================="
 echo ""
 
-echo "[1/4] Executing runSetupMandate on Primary Layer..."
-forge script governance/actions/Initialise.s.sol:Initialise \
-    --sig "runSetupMandate(address,uint256,uint256[])" \
-    "$PRIMARY_LAYER" "$NONCE" "$PRIVATE_KEYS" \
-    "${EXTRA_ARGS[@]}"
-echo "runSetupMandate completed successfully."
+# echo "[1/4] Executing runSetupMandate on Primary Layer..."
+# forge script governance/actions/Initialise.s.sol:Initialise \
+#     --sig "runSetupMandate(address,uint256,uint256[])" \
+#     "$PRIMARY_LAYER" "$NONCE" "$PRIVATE_KEYS" \
+#     "${EXTRA_ARGS[@]}"
+# echo "runSetupMandate completed successfully."
 
-echo "[2/4] Executing deployIdeasLayer1..."
-forge script governance/actions/Initialise.s.sol:Initialise \
-    --sig "deployIdeasLayer1(address,uint256,string[],uint256[])" \
-    "$PRIMARY_LAYER" "$NONCE" "$IDEAS_NAMES" "$PRIVATE_KEYS" \
-    "${EXTRA_ARGS[@]}"
-echo "deployIdeasLayer1 completed successfully."
+# echo "[2/4] Executing deployIdeasLayer1..."
+# forge script governance/actions/Initialise.s.sol:Initialise \
+#     --sig "deployIdeasLayer1(address,uint256,string[],uint256[])" \
+#     "$PRIMARY_LAYER" "$NONCE" "$IDEAS_NAMES" "$PRIVATE_KEYS" \
+#     "${EXTRA_ARGS[@]}"
+# echo "deployIdeasLayer1 completed successfully."
 
-echo ""
-countdown $INTERVAL
-echo ""
+# echo ""
+# countdown $INTERVAL
+# echo ""
 
-echo "[3/4] Executing deployIdeasLayer2..."
-forge script governance/actions/Initialise.s.sol:Initialise \
-    --sig "deployIdeasLayer2(address,uint256,string[],uint256[])" \
-    "$PRIMARY_LAYER" "$NONCE" "$IDEAS_NAMES" "$PRIVATE_KEYS" \
-    "${EXTRA_ARGS[@]}"
-echo "deployIdeasLayer2 completed successfully."
+# echo "[3/4] Executing deployIdeasLayer2..."
+# forge script governance/actions/Initialise.s.sol:Initialise \
+#     --sig "deployIdeasLayer2(address,uint256,string[],uint256[])" \
+#     "$PRIMARY_LAYER" "$NONCE" "$IDEAS_NAMES" "$PRIVATE_KEYS" \
+#     "${EXTRA_ARGS[@]}"
+# echo "deployIdeasLayer2 completed successfully."
 
-echo ""
-countdown $INTERVAL
-echo ""
+# echo ""
+# countdown $INTERVAL
+# echo ""
 
 echo "[4/4] Executing deployIdeasLayer3..."
 forge script governance/actions/Initialise.s.sol:Initialise \

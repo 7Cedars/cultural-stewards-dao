@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import { Powers } from "@lib/powers-monorepo/solidity/src/Powers.sol";   
+import { Powers } from "@lib/powers-monorepo/solidity/src/Powers.sol";
 import { Deploy } from "@governance/Deploy.s.sol";
-import { Configurations } from "@lib/powers-monorepo/solidity/script/Configurations.s.sol"; 
-import { TestHelperFunctions } from "@lib/powers-monorepo/solidity/test/TestSetup.t.sol"; 
-import { Initialise } from "@governance/actions/Initialise.s.sol";   
+import { Configurations } from "@lib/powers-monorepo/solidity/script/Configurations.s.sol";
+import { TestHelperFunctions } from "@lib/powers-monorepo/solidity/test/TestSetup.t.sol";
+import { InitialiseRunner } from "@governance/actions/InitialiseRunner.s.sol";
 
 interface IAllowanceModule {
     function delegates(address safe, uint48 index) external view returns (address delegate, uint48 prev, uint48 next);
@@ -30,9 +30,8 @@ contract CulturalStewardsDAO_IntegrationTest is TestHelperFunctions {
     address convergenceAddress;
     address ideasLayer0; 
 
-    // actions 
-    Initialise initialise;
-    // assets, management, .. etc  
+    // actions
+    InitialiseRunner runner;
 
     address treasury;
     address safeAllowanceModule; 
