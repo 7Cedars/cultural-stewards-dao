@@ -22,35 +22,35 @@
   "childContracts": [ 
     {
       "title": "Digital Layer",
-      "address": "0x8Ed502A5f288040b9A47E649B8C5F1ACe67847Fb"
+      "address": "0xf7d4E6c95482d74333a80eA9a2AE97Fb8783D5e0"
     },
     {
       "title": "Seeing",
-      "address": "0x38D9dC30A0fA5b933E70Ac23E3226D12BC4543b8"
+      "address": "0x24322caa581b7ff72f15296276ddd88ae7bdc9ad"
     },
     {
       "title": "Making",
-      "address": "0xA1795c5066c821C8c111151f62C87F59aC72FCF3"
+      "address": "0x124918cfe3d06000726b496eb9be0e5b0a5e1107"
     },
     {
       "title": "Listening",
-      "address": "0x6B81b7F6AfDCc69574763c37609140592eabf958"
+      "address": "0x510ae0ec12c58a3fca8b35cb0406949880a96a32"
     },
     {
       "title": "Telling",
-      "address": "0x5603DC7D973a9c4e6d664924eAfE71F1329b6C3c"
+      "address": "0xfeace8142dffcf9390db1ac41a0a1009c26b112f"
     },
     {
       "title": "Remembering",
-      "address": "0x545c54e85BD8Bfb918cd10ED2f5A5efc480e1725"
+      "address": "0x033ec645e63668df08dd6df882341519cd29fabc"
     },
     {
       "title": "Imagining",
-      "address": "0x599dFB6e2314dCC02C80e351738a0dCBF4b714f2"
+      "address": "0x5b76cfd034b1fe73cab40fed4f70bfcdb2f0d988"
     },
     {
       "title": "Tending",
-      "address": "0x11a68Ec4A23b7dD87B97A44dD4545D29E4277746"
+      "address": "0x0c0aae1541c24f476ebe96f409fb468c0b5f06fe"
     }
   ],
   "attributes": [ ]

@@ -13,7 +13,8 @@ import { PowersTypes } from "@lib/powers-monorepo/solidity/src/interfaces/Powers
 import { Powers } from "@lib/powers-monorepo/solidity/src/Powers.sol";
 import { IPowers } from "@lib/powers-monorepo/solidity/src/interfaces/IPowers.sol";
 
-import { Soulbound1155 } from "@lib/powers-monorepo/solidity/src/helpers/Soulbound1155.sol";
+import { Soulbound1155 } from "@lib/powers-monorepo/solidity/test/mocks/Soulbound1155.sol";
+
 import { Governed721 } from "@lib/powers-monorepo/solidity/src/helpers/Governed721.sol";
 import { Nominees } from "@lib/powers-monorepo/solidity/src/helpers/Nominees.sol";
 import { ElectionRegistry } from "@lib/powers-monorepo/solidity/src/helpers/ElectionRegistry.sol";

@@ -17,7 +17,7 @@ fi
 # Arguments or environment variables
 IDEAS_LAYERS="${1:-$IDEAS_LAYERS}"
 NONCE="${2:-$NONCE}"
-URI="${3:-$URI}"
+URI="${3:-$IDEAS_URI}"
 PRIVATE_KEYS="${4:-$PRIVATE_KEYS}"
 EXTRA_ARGS=("${@:5}") # Any additional arguments like --broadcast, --private-key, etc.
 
@@ -43,7 +43,7 @@ countdown() {
 }
 
 echo "=========================================================="
-echo "Starting URI Update Process for Ideas Layers"
+echo "Starting Ideas Layer Setup Process"
 echo "Ideas Layers: $IDEAS_LAYERS"
 echo "Nonce: $NONCE"
 echo "URI: $URI"
@@ -51,7 +51,22 @@ echo "Interval: 6 minutes ($INTERVAL seconds) between steps"
 echo "=========================================================="
 echo ""
 
-echo "[1/2] Executing updateUriIdeasLayer1 (propose and vote)..."
+echo "[1/3] Executing runSetupMandate for each Ideas Layer..."
+while IFS= read -r layer; do
+    [ -z "$layer" ] && continue
+    echo "  Running setup mandate for layer: $layer"
+    forge script governance/actions/Initialise.s.sol:Initialise \
+        --sig "runSetupMandate(address,uint256,uint256[])" \
+        "$layer" "$NONCE" "$PRIVATE_KEYS" \
+        "${EXTRA_ARGS[@]}"
+done < <(echo "$IDEAS_LAYERS" | tr -d '[]' | tr ',' '\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+echo "runSetupMandate completed for all layers."
+
+echo ""
+countdown $INTERVAL
+echo ""
+
+echo "[2/3] Executing updateUriIdeasLayer1 (propose and vote)..."
 forge script governance/actions/Initialise.s.sol:Initialise \
     --sig "updateUriIdeasLayer1(address[],string,uint256,uint256[])" \
     "$IDEAS_LAYERS" "$URI" "$NONCE" "$PRIVATE_KEYS" \
@@ -62,7 +77,7 @@ echo ""
 countdown $INTERVAL
 echo ""
 
-echo "[2/2] Executing updateUriIdeasLayer2 (execute)..."
+echo "[3/3] Executing updateUriIdeasLayer2 (execute)..."
 forge script governance/actions/Initialise.s.sol:Initialise \
     --sig "updateUriIdeasLayer2(address[],string,uint256,uint256[])" \
     "$IDEAS_LAYERS" "$URI" "$NONCE" "$PRIVATE_KEYS" \
@@ -71,5 +86,5 @@ echo "updateUriIdeasLayer2 completed successfully."
 
 echo ""
 echo "=========================================================="
-echo "URI Update Process Complete!"
+echo "Ideas Layer Setup Complete!"
 echo "=========================================================="
