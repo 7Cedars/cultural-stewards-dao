@@ -1,24 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.26;
 
-import { Test, console, console2 } from "forge-std/Test.sol";
-import { Powers } from "@lib/powers-monorepo/solidity/src/Powers.sol";
-import { IPowers } from "@lib/powers-monorepo/solidity/src/interfaces/IPowers.sol";
-import { PowersFactory } from "@lib/powers-monorepo/solidity/src/helpers/PowersFactory.sol";
-import { Mandate } from "@lib/powers-monorepo/solidity/src/Mandate.sol";
-import { IPowers } from "@lib/powers-monorepo/solidity/src/interfaces/IPowers.sol";
-import { PowersTypes } from "@lib/powers-monorepo/solidity/src/interfaces/PowersTypes.sol";
+import { Powers } from "@lib/powers-monorepo/solidity/src/Powers.sol";   
 import { Deploy } from "@governance/Deploy.s.sol";
 import { Configurations } from "@lib/powers-monorepo/solidity/script/Configurations.s.sol"; 
-import { TestHelperFunctions } from "@lib/powers-monorepo/solidity/test/TestSetup.t.sol";
-import { PresetActions } from "@lib/powers-monorepo/solidity/src/mandates/executive/PresetActions.sol";
-
-import { Helpers } from "@governance/Helpers.s.sol";
-import { Initialise } from "@governance/actions/Initialise.s.sol";
-import { PrimaryLayer } from "@governance/PrimaryLayer.s.sol";
-import { DigitalLayer } from "@governance/DigitalLayer.s.sol";
-import { IdeasLayer } from "@governance/IdeasLayer.s.sol";
-import { ConvergenceLayer } from "@governance/ConvergenceLayer.s.sol";
+import { TestHelperFunctions } from "@lib/powers-monorepo/solidity/test/TestSetup.t.sol"; 
+import { Initialise } from "@governance/actions/Initialise.s.sol";   
 
 interface IAllowanceModule {
     function delegates(address safe, uint48 index) external view returns (address delegate, uint48 prev, uint48 next);
@@ -55,7 +42,7 @@ contract CulturalStewardsDAO_IntegrationTest is TestHelperFunctions {
 
     uint256 fork; 
     uint256 blocksPerHour;
-    string[] IDEAS_NAMES = ["Seeing", "Making", "Listening", "Telling", "Remembering", "Imagining", "Tending"];
+    string[] ideasNames = ["Seeing", "Making", "Listening", "Telling", "Remembering", "Imagining", "Tending"];
     uint256[] privateKeys = [
         vm.envUint("TEST_ACCOUNT_KEY_1"), 
         vm.envUint("TEST_ACCOUNT_KEY_2"), 
@@ -82,14 +69,14 @@ contract CulturalStewardsDAO_IntegrationTest is TestHelperFunctions {
         initialise.runSetupMandate(digitalAddress, nonce, privateKeys);
 
         // step 2: intialise Ideas Layers  
-        initialise.deployIdeasLayer1(primaryAddress, nonce, IDEAS_NAMES, privateKeys);
+        initialise.deployIdeasLayer1(primaryAddress, nonce, ideasNames, privateKeys);
         
         vm.roll(block.number + minutesToBlocks(6, blocksPerHour)); // Advance some blocks to avoid same-block issues.
 
-        initialise.deployIdeasLayer2(primaryAddress, nonce, IDEAS_NAMES, privateKeys);
+        initialise.deployIdeasLayer2(primaryAddress, nonce, ideasNames, privateKeys);
         vm.roll(block.number + minutesToBlocks(6, blocksPerHour)); // Advance some blocks to avoid same-block issues.
 
-        initialise.deployIdeasLayer3(primaryAddress, nonce, IDEAS_NAMES, privateKeys);
+        initialise.deployIdeasLayer3(primaryAddress, nonce, ideasNames, privateKeys);
         vm.roll(block.number + minutesToBlocks(6, blocksPerHour)); // Advance some blocks to avoid same-block issues.
 
         // step 3: initialise Convergence Layer
