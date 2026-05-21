@@ -7,7 +7,8 @@ import { Configurations } from "@lib/powers-monorepo/solidity/script/Configurati
 import { PowersTypes } from "@lib/powers-monorepo/solidity/src/interfaces/PowersTypes.sol";
 import { Powers } from "@lib/powers-monorepo/solidity/src/Powers.sol";
 import { IPowers } from "@lib/powers-monorepo/solidity/src/interfaces/IPowers.sol";
-import { Soulbound1155, Soulbound1155Factory } from "@lib/powers-monorepo/solidity/src/helpers/Soulbound1155.sol";
+
+import { Soulbound1155, Soulbound1155Factory } from "@lib/powers-monorepo/solidity/test/mocks/Soulbound1155.sol"; 
 import { PowersFactory } from "@lib/powers-monorepo/solidity/src/helpers/PowersFactory.sol"; 
 import { ElectionRegistry } from "@lib/powers-monorepo/solidity/src/helpers/ElectionRegistry.sol";
 import { DeploySetup } from "./DeploySetup.s.sol";

@@ -154,9 +154,9 @@ contract Initialise is ActionHelpers {
             console2.log("Deployed Ideas Layer: ", names[i], ": ", deployedIdeasLayer[i]);
             unpackReformPackages(deployedIdeasLayer[i], nonce, privateKeys); // unpack reform packages at the new ideas layer.
         }
-        for (uint i = 0; i < names.length; i++) {
-            runSetupMandate(deployedIdeasLayer[i], nonce, privateKeys); // run setup mandate at the new ideas layer to assign roles and unpack reform packages.
-        }
+        // for (uint i = 0; i < names.length; i++) {
+        //     runSetupMandate(deployedIdeasLayer[i], nonce, privateKeys); // run setup mandate at the new ideas layer to assign roles and unpack reform packages.
+        // }
 
         console2.log("Deployed ", names.length, " Ideas Layers Successfully!");
         return deployedIdeasLayer;

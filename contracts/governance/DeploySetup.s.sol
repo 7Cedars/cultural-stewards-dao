@@ -11,7 +11,7 @@ import { DeployHelpers } from "@lib/powers-monorepo/solidity/governance/DeployHe
 import { Configurations } from "@lib/powers-monorepo/solidity/script/Configurations.s.sol";
 
 import { ElectionRegistry } from "@lib/powers-monorepo/solidity/src/helpers/ElectionRegistry.sol";
-import { Soulbound1155 } from "@lib/powers-monorepo/solidity/src/helpers/Soulbound1155.sol";
+import { Soulbound1155 } from "@lib/powers-monorepo/solidity/test/mocks/Soulbound1155.sol";
 import { MandateRegistry } from "@lib/powers-monorepo/solidity/src/helpers/MandateRegistry.sol";
 
 abstract contract DeploySetup is DeployHelpers {
