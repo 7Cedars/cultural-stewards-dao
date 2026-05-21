@@ -61,38 +61,30 @@ contract CulturalStewardsDAO_IntegrationTest is TestHelperFunctions {
         (primaryAddress, digitalAddress, ideasLayerFactoryAddress, convergenceLayerFactoryAddress) = deploy.run();
         
 
-        // setting up the organisation (6 Ideas layes + 1 convergence layer)
-        //1step 1 running setup mandates on Primary and Digital Layer. 
-        initialise = new Initialise();
-        initialise.runSetupMandate(primaryAddress, nonce, privateKeys);
-        initialise.runSetupMandate(digitalAddress, nonce, privateKeys);
+        // Initialise the full organisation using the stateful runner.
+        // Each run() call advances the flow as far as on-chain state allows,
+        // then stops at the next voting window or timelock. vm.roll() simulates
+        // time passing between calls; on a live chain, simply wait and re-run.
+        runner = new InitialiseRunner();
 
-        // step 2: intialise Ideas Layers  
-        initialise.deployIdeasLayer1(primaryAddress, nonce, ideasNames, privateKeys);
-        
-        vm.roll(block.number + minutesToBlocks(6, blocksPerHour)); // Advance some blocks to avoid same-block issues.
+        runner.run(primaryAddress, digitalAddress, nonce, ideasNames, privateKeys);
+        vm.roll(block.number + minutesToBlocks(6, blocksPerHour)); // wait: Ideas Layer initiation voting
 
-        initialise.deployIdeasLayer2(primaryAddress, nonce, ideasNames, privateKeys);
-        vm.roll(block.number + minutesToBlocks(6, blocksPerHour)); // Advance some blocks to avoid same-block issues.
+        runner.run(primaryAddress, digitalAddress, nonce, ideasNames, privateKeys);
+        vm.roll(block.number + minutesToBlocks(6, blocksPerHour)); // wait: Ideas Layer creation voting
 
-        initialise.deployIdeasLayer3(primaryAddress, nonce, ideasNames, privateKeys);
-        vm.roll(block.number + minutesToBlocks(6, blocksPerHour)); // Advance some blocks to avoid same-block issues.
+        runner.run(primaryAddress, digitalAddress, nonce, ideasNames, privateKeys);
+        vm.roll(block.number + minutesToBlocks(6, blocksPerHour)); // wait: Convergence Layer request voting
 
-        // step 3: initialise Convergence Layer
+        runner.run(primaryAddress, digitalAddress, nonce, ideasNames, privateKeys);
+        vm.roll(block.number + minutesToBlocks(8, blocksPerHour)); // wait: send-request voting
+
+        runner.run(primaryAddress, digitalAddress, nonce, ideasNames, privateKeys);
+        vm.roll(block.number + minutesToBlocks(8, blocksPerHour)); // wait: assignment voting / timelock
+
+        runner.run(primaryAddress, digitalAddress, nonce, ideasNames, privateKeys);
+
         ideasLayer0 = Powers(payable(primaryAddress)).getRoleHolderAtIndex(4, 0);
-        initialise.deployConvergenceLayer1(ideasLayer0, nonce, privateKeys);
-        vm.roll(block.number + minutesToBlocks(6, blocksPerHour)); // Advance some blocks to avoid same-block issues.
-
-        initialise.deployConvergenceLayer2(ideasLayer0, nonce, privateKeys);
-        vm.roll(block.number + minutesToBlocks(8, blocksPerHour)); // Advance some blocks to avoid same-block issues.
-
-        initialise.deployConvergenceLayer3(primaryAddress, ideasLayer0, nonce, privateKeys);
-        vm.roll(block.number + minutesToBlocks(8, blocksPerHour)); // Advance some blocks to avoid same-block issues.
-
-        initialise.deployConvergenceLayer4(primaryAddress, nonce, privateKeys);
-        vm.roll(block.number + minutesToBlocks(8, blocksPerHour)); // Advance some blocks to avoid same-block issues.
-        
-        initialise.deployConvergenceLayer5(primaryAddress, nonce, privateKeys);
     }
 
     function test_initialise_cultural_stewards() public view {
