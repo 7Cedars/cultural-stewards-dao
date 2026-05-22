@@ -42,7 +42,7 @@ const IdeasDao = () => {
             <p className="text-sm opacity-70">Pick a layer below and complete the form to join the conversation.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {ideasLayers.map(({ n, title, actions, participants, uriDescription }) => (
+            {ideasLayers.map(({ n, title, uriDescription }) => (
               <a
                 key={n}
                 href={`https://powers-utils.vercel.app/CS-signup?index=${signupIndex[title] ?? ""}`}
@@ -61,15 +61,9 @@ const IdeasDao = () => {
                   />
                 </div>
                 <h3 className="text-xl font-bold">{title}</h3>
-                <p className="text-base opacity-70">
-                  <span className="font-bold">Idea Layer ID:</span> {n}
-                </p>
                 <p className="text-base opacity-70">{uriDescription}</p>
                 <p className="text-base opacity-70">
-                  <span className="font-bold">Actions:</span> {actions}
-                </p>
-                <p className="text-base opacity-70">
-                  <span className="font-bold">Participants:</span> {participants}
+                  <span className="font-bold">Actions:</span> Stay tuned...
                 </p>
               </a>
             ))}
